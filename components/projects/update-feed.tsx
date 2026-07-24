@@ -60,13 +60,14 @@ export function UpdateFeed({
       <div className="space-y-3">
         {updates.map((u) => (
           <div key={u.id} className="flex items-start gap-3 group">
-            <Avatar name={u.author.name} size={30} />
+            <Avatar name={u.author?.name ?? "?"} size={30} />
             <div className="min-w-0 flex-1 rounded-xl bg-[var(--bg)] px-3 py-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-[var(--text)]">
-                  {u.author.name} <span className="font-normal text-[var(--text-faint)]">· {timeAgo(u.createdAt)}</span>
+                  {u.author?.name ?? "Removed user"}{" "}
+                  <span className="font-normal text-[var(--text-faint)]">· {timeAgo(u.createdAt)}</span>
                 </p>
-                {(u.author.id === currentUserId || canModerate) && (
+                {(u.author?.id === currentUserId || canModerate) && (
                   <button
                     type="button"
                     onClick={() => deleteUpdate(u.id, projectId)}

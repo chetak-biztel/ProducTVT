@@ -18,9 +18,16 @@ async function assertMember(projectId: string, userId: string) {
   if (!allowed) throw new Error("Not authorized");
 }
 
+async function isProjectOwner(projectId: string, userId: string): Promise<boolean> {
+  const membership = await prisma.projectMember.findUnique({
+    where: { projectId_userId: { projectId, userId } },
+    select: { role: true },
+  });
+  return membership?.role === "OWNER";
+}
+
 async function assertOwner(projectId: string, userId: string) {
-  const project = await prisma.project.findUnique({ where: { id: projectId }, select: { createdById: true } });
-  if (!project || project.createdById !== userId) throw new Error("Only the project owner can do this");
+  if (!(await isProjectOwner(projectId, userId))) throw new Error("Only the project owner can do this");
 }
 
 function revalidateProject(id: string) {
@@ -256,8 +263,7 @@ export async function deleteUpdate(updateId: string, projectId: string) {
   const user = await requireUser();
   const update = await prisma.projectUpdate.findUnique({ where: { id: updateId }, select: { authorId: true } });
   if (!update) return;
-  const isOwner = await prisma.project.findUnique({ where: { id: projectId }, select: { createdById: true } });
-  if (update.authorId !== user.id && isOwner?.createdById !== user.id) throw new Error("Not authorized");
+  if (update.authorId !== user.id && !(await isProjectOwner(projectId, user.id))) throw new Error("Not authorized");
   await prisma.projectUpdate.delete({ where: { id: updateId } });
   revalidateProject(projectId);
 }

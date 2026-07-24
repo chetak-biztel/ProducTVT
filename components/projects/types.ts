@@ -25,7 +25,7 @@ export type ProjectUpdateDTO = {
   id: string;
   body: string;
   createdAt: string;
-  author: { id: string; name: string };
+  author: { id: string; name: string } | null;
 };
 
 export type ProjectSectionDTO = {
@@ -42,7 +42,7 @@ export type ProjectDetailDTO = {
   description: string | null;
   status: ProjectStatusV;
   isPersonal: boolean;
-  createdBy: { id: string; name: string };
+  createdBy: { id: string; name: string } | null;
   members: ProjectMemberDTO[];
   sections: ProjectSectionDTO[];
 };

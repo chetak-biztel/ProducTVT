@@ -90,7 +90,7 @@ export function Nav({ user }: { user: NavUser }) {
       >
         V
       </span>
-      <span className="font-semibold tracking-tight text-[var(--text)]">ProductVT</span>
+      <span className="font-semibold tracking-tight text-[var(--text)]">ProducTVT</span>
     </Link>
   );
 

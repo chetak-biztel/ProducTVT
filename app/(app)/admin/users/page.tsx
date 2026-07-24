@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { Avatar } from "@/components/ui/avatar";
 import { CreateUserDialog } from "@/components/admin/create-user-dialog";
 import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
+import { DeleteUserButton } from "@/components/admin/delete-user-button";
 import { RoleSelect, ActiveToggle } from "@/components/admin/user-row-controls";
 
 export default async function AdminUsersPage() {
@@ -48,7 +49,10 @@ export default async function AdminUsersPage() {
                     <ActiveToggle userId={u.id} active={u.active} disabled={self} />
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <ResetPasswordDialog userId={u.id} name={u.name} />
+                    <div className="flex items-center justify-end gap-1">
+                      <ResetPasswordDialog userId={u.id} name={u.name} />
+                      <DeleteUserButton userId={u.id} name={u.name} disabled={self} />
+                    </div>
                   </td>
                 </tr>
               );

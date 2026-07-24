@@ -3,7 +3,7 @@ import "./globals.css";
 import { getAccentColor, readableForeground } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "ProductVT — Team Plans & Projects",
+  title: "ProducTVT — Team Plans & Projects",
   description: "Weekly action plans, todos, and project management for the team.",
 };
 

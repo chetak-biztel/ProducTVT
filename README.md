@@ -1,4 +1,4 @@
-# ProductVT
+# ProducTVT
 
 Weekly action plans, personal todos, and project management for the team — built with Next.js, Prisma, and Supabase Postgres.
 

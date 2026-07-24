@@ -11,7 +11,7 @@ export default function LoginPage() {
           >
             V
           </span>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Welcome to ProductVT</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Welcome to ProducTVT</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Sign in to plan your week and run projects.</p>
         </div>
 

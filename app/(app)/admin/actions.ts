@@ -96,6 +96,42 @@ export async function updateUserRole(userId: string, role: string) {
   revalidatePath("/team");
 }
 
+/** Keeps projects manageable after their owner is deleted: promotes the
+    longest-standing other member to OWNER for each project this user owns. */
+async function promoteReplacementOwners(userId: string) {
+  const owned = await prisma.projectMember.findMany({
+    where: { userId, role: "OWNER" },
+    select: { projectId: true },
+  });
+  for (const { projectId } of owned) {
+    const next = await prisma.projectMember.findFirst({
+      where: { projectId, userId: { not: userId } },
+      orderBy: { addedAt: "asc" },
+    });
+    if (next) {
+      await prisma.projectMember.update({ where: { id: next.id }, data: { role: "OWNER" } });
+    }
+  }
+}
+
+/**
+ * Permanently deletes a user. Their weekly plans, todos, and board config
+ * (categories/statuses/columns) are deleted with them. Projects, tasks, and
+ * updates they created are kept (now shown as created by a removed user);
+ * any project they solely owned gets a new owner automatically first.
+ */
+export async function deleteUserAction(userId: string) {
+  const actor = await requireManager();
+  if (userId === actor.id) throw new Error("You can't delete your own account");
+
+  await promoteReplacementOwners(userId);
+  await prisma.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/team");
+  revalidatePath("/projects");
+}
+
 // ---------- Accent color ----------
 
 const accentSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Pick a valid color") });
