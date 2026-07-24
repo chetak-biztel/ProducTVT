@@ -1,0 +1,296 @@
+// ProductVT — Prisma schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  FOUNDER
+  MANAGER
+  EMPLOYEE
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  ARCHIVED
+}
+
+enum ProjectMemberRole {
+  OWNER
+  MEMBER
+}
+
+enum SectionType {
+  HARDWARE
+  SOFTWARE
+  PROJECT_MGMT
+  OTHER
+}
+
+enum TaskStatus {
+  TODO
+  DOING
+  DONE
+}
+
+enum Priority {
+  LOW
+  MED
+  HIGH
+}
+
+enum PlanColumnType {
+  TEXT
+  DATE
+  NUMBER
+  SELECT
+  MULTI_SELECT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  name         String
+  email        String?
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  // relations
+  planItems        PlanItem[]     @relation("PlanOwner")
+  assignedPlan     PlanItem[]     @relation("PlanAssignee")
+  todos            Todo[]
+  todoTags         TodoPerson[]
+  createdProjects  Project[]      @relation("ProjectCreator")
+  memberships      ProjectMember[]
+  updates          ProjectUpdate[]
+  createdTasks     ProjectTask[]  @relation("TaskCreator")
+  assignedTasks    ProjectTask[]  @relation("TaskAssignee")
+  categories       Category[]     @relation("CategoryOwner")
+  planStatuses     PlanStatus[]   @relation("PlanStatusOwner")
+  planColumns      PlanColumn[]   @relation("PlanColumnOwner")
+}
+
+model AppSetting {
+  key   String @id
+  value String
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  ownerId   String
+  name      String
+  color     String     @default("#2563eb")
+  order     Int        @default(0)
+  active    Boolean    @default(true)
+  owner     User       @relation("CategoryOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  planItems PlanItem[]
+
+  @@unique([ownerId, name])
+}
+
+model PlanStatus {
+  id        String     @id @default(cuid())
+  ownerId   String
+  name      String
+  color     String     @default("#64748b")
+  order     Int        @default(0)
+  isDefault Boolean    @default(false)
+  owner     User       @relation("PlanStatusOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  planItems PlanItem[]
+
+  @@unique([ownerId, name])
+}
+
+model PlanItem {
+  id            String   @id @default(cuid())
+  ownerId       String
+  weekStartDate DateTime @db.Date
+  categoryId    String?
+  subTag        String?
+  title         String
+  statusId      String?
+  assigneeId    String?
+  review        String?
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  owner    User        @relation("PlanOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  category Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  status   PlanStatus? @relation(fields: [statusId], references: [id], onDelete: SetNull)
+  assignee User?       @relation("PlanAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  values   PlanItemValue[]
+
+  @@index([ownerId, weekStartDate])
+}
+
+// ---- Custom (user-defined) plan columns ----
+
+model PlanColumn {
+  id      String         @id @default(cuid())
+  ownerId String
+  name    String
+  type    PlanColumnType
+  order   Int            @default(0)
+
+  owner   User               @relation("PlanColumnOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  options PlanColumnOption[]
+  values  PlanItemValue[]
+
+  @@unique([ownerId, name])
+}
+
+model PlanColumnOption {
+  id       String @id @default(cuid())
+  columnId String
+  name     String
+  color    String @default("#64748b")
+  order    Int    @default(0)
+
+  column PlanColumn            @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  values PlanItemValueOption[]
+
+  @@unique([columnId, name])
+}
+
+/** One cell: a PlanItem's value for one PlanColumn. Text/Date/Number use the scalar
+    fields directly; Select/Multi-select use the `options` join instead. */
+model PlanItemValue {
+  id          String    @id @default(cuid())
+  planItemId  String
+  columnId    String
+  textValue   String?
+  dateValue   DateTime? @db.Date
+  numberValue Float?
+
+  planItem PlanItem                @relation(fields: [planItemId], references: [id], onDelete: Cascade)
+  column   PlanColumn              @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  options  PlanItemValueOption[]
+
+  @@unique([planItemId, columnId])
+}
+
+model PlanItemValueOption {
+  valueId  String
+  optionId String
+
+  value  PlanItemValue    @relation(fields: [valueId], references: [id], onDelete: Cascade)
+  option PlanColumnOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@id([valueId, optionId])
+}
+
+model Todo {
+  id        String    @id @default(cuid())
+  ownerId   String
+  title     String
+  notes     String?
+  done      Boolean   @default(false)
+  dueDate   DateTime? @db.Date
+  priority  Priority?
+  projectId String?
+  tags      String[]  @default([])
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  owner   User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  people  TodoPerson[]
+
+  @@index([ownerId])
+}
+
+model TodoPerson {
+  todoId String
+  userId String
+
+  todo Todo @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([todoId, userId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  isPersonal  Boolean       @default(false)
+  createdById String
+  createdAt   DateTime      @default(now())
+
+  createdBy User            @relation("ProjectCreator", fields: [createdById], references: [id])
+  members   ProjectMember[]
+  sections  ProjectSection[]
+  updates   ProjectUpdate[]
+  tasks     ProjectTask[]
+  todos     Todo[]
+}
+
+model ProjectMember {
+  id        String            @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectMemberRole @default(MEMBER)
+  addedAt   DateTime          @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model ProjectSection {
+  id        String      @id @default(cuid())
+  projectId String
+  name      String
+  type      SectionType @default(OTHER)
+  order     Int         @default(0)
+
+  project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  updates ProjectUpdate[]
+  tasks   ProjectTask[]
+}
+
+model ProjectUpdate {
+  id        String   @id @default(cuid())
+  projectId String
+  sectionId String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section ProjectSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  author  User           @relation(fields: [authorId], references: [id])
+
+  @@index([projectId, createdAt])
+}
+
+model ProjectTask {
+  id          String     @id @default(cuid())
+  projectId   String
+  sectionId   String
+  title       String
+  status      TaskStatus @default(TODO)
+  assigneeId  String?
+  createdById String
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  section   ProjectSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  assignee  User?          @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy User           @relation("TaskCreator", fields: [createdById], references: [id])
+
+  @@index([projectId])
+}

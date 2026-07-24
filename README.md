@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProductVT
 
-## Getting Started
+Weekly action plans, personal todos, and project management for the team — built with Next.js, Prisma, and Supabase Postgres.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Next.js 16 (App Router) + TypeScript, Tailwind CSS + shadcn-style components
+- Prisma ORM → PostgreSQL (Supabase in production, any Postgres locally)
+- Auth.js (NextAuth v5) — username/password, admin-provisioned accounts
+- Deployed on Vercel; a `Dockerfile` is included for a future self-hosted (e.g. GCP) move
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Copy `.env.example` to `.env` and fill in a database connection (see below).
+2. Install dependencies and generate the Prisma client:
+   ```bash
+   npm install
+   ```
+3. Run migrations and seed the database (creates the first Founder account, default plan statuses, and example categories):
+   ```bash
+   npm run db:migrate
+   npm run db:seed
+   ```
+4. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) and sign in with the `SEED_FOUNDER_USERNAME` / `SEED_FOUNDER_PASSWORD` from your `.env`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Database options
 
-## Learn More
+- **Supabase (recommended, matches production):** create a project, then copy the pooled connection string into `DATABASE_URL` and the direct connection string into `DIRECT_URL` from Project → Settings → Database.
+- **Local Postgres via Docker:** `docker run -d --name productvt-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=productvt -p 5432:5432 postgres:16-alpine`, then point both `DATABASE_URL` and `DIRECT_URL` at `postgresql://postgres:postgres@localhost:5432/productvt`.
 
-To learn more about Next.js, take a look at the following resources:
+## Useful scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` / `npm run start` | Production build / run |
+| `npm run lint` | ESLint |
+| `npm run db:migrate` | Create/apply a Prisma migration (dev) |
+| `npm run db:deploy` | Apply migrations in production |
+| `npm run db:seed` | Re-run the seed script |
+| `npm run db:studio` | Open Prisma Studio to browse the database |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying
 
-## Deploy on Vercel
+- **Vercel:** connect the repo, set the env vars from `.env.example`, and run `npm run db:deploy` once against the production database (or add it as a build step).
+- **Self-hosted / GCP:** build the included `Dockerfile`, which produces a standalone Next.js server image.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Admin basics
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The first Founder account comes from the seed script — sign in and create real accounts under **Admin → Users** (accounts are admin-provisioned; there's no public sign-up).
+- **Admin → Board config** manages the plan statuses, category tags, and the app's accent color.
