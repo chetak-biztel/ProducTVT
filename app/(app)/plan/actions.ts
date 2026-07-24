@@ -44,9 +44,18 @@ export async function createPlanItem(_prev: ActionState, formData: FormData): Pr
   const weekStartDate = parseWeekKey(parsed.data.weekStartDate);
   let statusId = parsed.data.statusId;
   if (!statusId) {
-    const def = await prisma.planStatus.findFirst({ where: { isDefault: true } });
+    const def = await prisma.planStatus.findFirst({ where: { ownerId, isDefault: true } });
     statusId = def?.id;
   }
+
+  // Any `col_<columnId>` fields carry values for this owner's custom columns,
+  // submitted from the same "add task" form.
+  const columnIds = Array.from(formData.keys())
+    .filter((k) => k.startsWith("col_"))
+    .map((k) => k.slice(4));
+  const columns = columnIds.length
+    ? await prisma.planColumn.findMany({ where: { id: { in: columnIds }, ownerId, systemField: null } })
+    : [];
 
   const last = await prisma.planItem.findFirst({
     where: { ownerId, weekStartDate },
@@ -54,16 +63,40 @@ export async function createPlanItem(_prev: ActionState, formData: FormData): Pr
     select: { order: true },
   });
 
-  await prisma.planItem.create({
-    data: {
-      ownerId,
-      weekStartDate,
-      title,
-      categoryId: categoryId || null,
-      subTag: subTag || null,
-      statusId: statusId || null,
-      order: (last?.order ?? -1) + 1,
-    },
+  await prisma.$transaction(async (tx) => {
+    const item = await tx.planItem.create({
+      data: {
+        ownerId,
+        weekStartDate,
+        title,
+        categoryId: categoryId || null,
+        subTag: subTag || null,
+        statusId: statusId || null,
+        order: (last?.order ?? -1) + 1,
+      },
+    });
+
+    for (const column of columns) {
+      if (column.type === "SELECT" || column.type === "MULTI_SELECT") {
+        const optionIds = formData.getAll(`col_${column.id}`).map(String);
+        if (optionIds.length === 0) continue;
+        const value = await tx.planItemValue.create({ data: { planItemId: item.id, columnId: column.id } });
+        await tx.planItemValueOption.createMany({
+          data: optionIds.map((optionId) => ({ valueId: value.id, optionId })),
+        });
+      } else {
+        const raw = formData.get(`col_${column.id}`);
+        if (raw == null || raw === "") continue;
+        const data: { textValue?: string; dateValue?: Date; numberValue?: number } = {};
+        if (column.type === "TEXT") data.textValue = String(raw);
+        else if (column.type === "DATE") data.dateValue = new Date(String(raw));
+        else if (column.type === "NUMBER") {
+          const n = Number(raw);
+          if (!Number.isNaN(n)) data.numberValue = n;
+        }
+        await tx.planItemValue.create({ data: { planItemId: item.id, columnId: column.id, ...data } });
+      }
+    }
   });
 
   revalidatePlan(ownerId, weekStartDate);

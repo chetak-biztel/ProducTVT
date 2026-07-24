@@ -31,16 +31,18 @@ export async function createUserAction(_prev: ActionState, formData: FormData): 
   await requireManager();
   const parsed = createUserSchema.safeParse({
     username: formData.get("username"),
-    name: formData.get("name"),
+    name: formData.get("fullName"),
     password: formData.get("password"),
     role: formData.get("role"),
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");
 
-  const existing = await prisma.user.findUnique({ where: { username: parsed.data.username } });
+  const [existing, passwordHash] = await Promise.all([
+    prisma.user.findUnique({ where: { username: parsed.data.username } }),
+    bcrypt.hash(parsed.data.password, 10),
+  ]);
   if (existing) return fail("That username is already taken");
 
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const user = await prisma.user.create({
     data: {
       username: parsed.data.username,
@@ -103,15 +105,17 @@ async function promoteReplacementOwners(userId: string) {
     where: { userId, role: "OWNER" },
     select: { projectId: true },
   });
-  for (const { projectId } of owned) {
-    const next = await prisma.projectMember.findFirst({
-      where: { projectId, userId: { not: userId } },
-      orderBy: { addedAt: "asc" },
-    });
-    if (next) {
-      await prisma.projectMember.update({ where: { id: next.id }, data: { role: "OWNER" } });
-    }
-  }
+  await Promise.all(
+    owned.map(async ({ projectId }) => {
+      const next = await prisma.projectMember.findFirst({
+        where: { projectId, userId: { not: userId } },
+        orderBy: { addedAt: "asc" },
+      });
+      if (next) {
+        await prisma.projectMember.update({ where: { id: next.id }, data: { role: "OWNER" } });
+      }
+    }),
+  );
 }
 
 /**

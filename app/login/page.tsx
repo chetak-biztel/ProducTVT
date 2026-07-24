@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { LoginForm } from "@/components/login-form";
 
 export default function LoginPage() {
@@ -5,12 +6,15 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <span
-            className="mb-3 grid h-12 w-12 place-items-center rounded-2xl text-xl font-bold text-[var(--accent-fg)]"
-            style={{ background: "var(--accent)", boxShadow: "var(--shadow)" }}
-          >
-            V
-          </span>
+          <Image
+            src="/logo.png"
+            alt="ProducTVT"
+            width={48}
+            height={48}
+            className="mb-3 h-12 w-12 rounded-2xl"
+            style={{ boxShadow: "var(--shadow)" }}
+            priority
+          />
           <h1 className="text-xl font-semibold tracking-tight text-[var(--text)]">Welcome to ProducTVT</h1>
           <p className="mt-1 text-sm text-[var(--text-muted)]">Sign in to plan your week and run projects.</p>
         </div>

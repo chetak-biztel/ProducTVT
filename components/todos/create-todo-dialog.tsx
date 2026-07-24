@@ -23,7 +23,7 @@ export function CreateTodoDialog({
       wide
     >
       <Field label="Title" htmlFor="title">
-        <input id="title" name="title" className="input" placeholder="What needs doing?" autoFocus />
+        <input id="title" name="title" className="input" placeholder="What needs doing?" autoFocus autoComplete="off" />
       </Field>
       <Field label="Notes" htmlFor="notes">
         <textarea id="notes" name="notes" rows={2} className="textarea" placeholder="Optional details…" />

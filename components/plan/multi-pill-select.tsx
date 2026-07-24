@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { Pill } from "@/components/ui/pill";
+import { cn } from "@/lib/utils";
 import type { PillOption } from "@/components/plan/pill-select";
 
 export function MultiPillSelect({
@@ -12,12 +13,15 @@ export function MultiPillSelect({
   onChange,
   placeholder = "Select…",
   disabled = false,
+  fillHeight = false,
 }: {
   values: string[];
   options: PillOption[];
   onChange: (ids: string[]) => Promise<void> | void;
   placeholder?: string;
   disabled?: boolean;
+  /** Stretches pills to fill a fixed-height parent (e.g. a toolbar row), instead of their natural compact size. */
+  fillHeight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -67,15 +71,20 @@ export function MultiPillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex flex-wrap items-center gap-1 rounded-md px-1 py-0.5 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100"
+        className={cn(
+          "inline-flex flex-wrap items-center gap-1 rounded-md px-1 py-0.5 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100",
+          fillHeight && "h-full",
+        )}
       >
         {pending ? (
           <Loader2 size={13} className="animate-spin text-[var(--text-faint)]" />
         ) : selected.length === 0 ? (
-          <span className="pill !bg-transparent !border-dashed text-[var(--text-faint)]">{placeholder}</span>
+          <span className={cn("pill !bg-transparent !border-dashed text-[var(--text-faint)]", fillHeight && "h-full !py-0")}>
+            {placeholder}
+          </span>
         ) : (
           selected.map((o) => (
-            <Pill key={o.id} color={o.color}>
+            <Pill key={o.id} color={o.color} className={fillHeight ? "h-full !py-0" : undefined}>
               {o.name}
             </Pill>
           ))

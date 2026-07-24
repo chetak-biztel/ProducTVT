@@ -47,7 +47,7 @@ const createProjectSchema = z.object({
 export async function createProjectAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
   const parsed = createProjectSchema.safeParse({
-    name: formData.get("name"),
+    name: formData.get("projectName"),
     description: formData.get("description") || undefined,
     isPersonal: formData.get("isPersonal") || undefined,
   });
@@ -143,7 +143,7 @@ export async function createSectionAction(_prev: ActionState, formData: FormData
   const user = await requireUser();
   const parsed = sectionSchema.safeParse({
     projectId: formData.get("projectId"),
-    name: formData.get("name"),
+    name: formData.get("sectionName"),
     type: formData.get("type"),
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Table2, LayoutGrid } from "lucide-react";
+import Link from "next/link";
+import { Table2, LayoutGrid, Columns3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlanTable } from "@/components/plan/plan-table";
 import { PlanBoard } from "@/components/plan/plan-board";
 import { AddItemRow } from "@/components/plan/add-item-row";
-import { TableSettingsDialog } from "@/components/plan/board-settings/table-settings-dialog";
 import type { PlanCategory, PlanColumnDTO, PlanItemDTO, PlanStatusOpt } from "@/components/plan/types";
 
 export function PlanView({
@@ -14,9 +14,9 @@ export function PlanView({
   weekKey,
   items,
   categories,
-  allCategories,
   statuses,
   columns,
+  columnsHref,
   editable,
   showReview = true,
 }: {
@@ -24,9 +24,9 @@ export function PlanView({
   weekKey: string;
   items: PlanItemDTO[];
   categories: PlanCategory[];
-  allCategories: PlanCategory[];
   statuses: PlanStatusOpt[];
   columns: PlanColumnDTO[];
+  columnsHref: string;
   editable: boolean;
   showReview?: boolean;
 }) {
@@ -60,13 +60,10 @@ export function PlanView({
           </button>
         </div>
 
-        <TableSettingsDialog
-          ownerId={ownerId}
-          categories={allCategories}
-          statuses={statuses}
-          columns={columns}
-          editable={editable}
-        />
+        <Link href={columnsHref} className="btn btn-outline btn-sm">
+          <Columns3 size={14} />
+          Edit Columns
+        </Link>
       </div>
 
       {view === "table" ? (
@@ -88,6 +85,7 @@ export function PlanView({
           weekKey={weekKey}
           categories={categories}
           statuses={statuses}
+          columns={columns}
           defaultStatusId={defaultStatusId}
         />
       )}

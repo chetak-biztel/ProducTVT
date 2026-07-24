@@ -12,14 +12,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const user = await requireUser();
   const { id } = await params;
 
-  const allowed = await canAccessProject(id, user.id);
+  const [allowed, users] = await Promise.all([canAccessProject(id, user.id), getActiveUsers()]);
   if (!allowed) notFound();
 
   const project = await getProjectDetail(id);
   if (!project) notFound();
 
   const isOwner = project.members.some((m) => m.user.id === user.id && m.role === "OWNER");
-  const users = await getActiveUsers();
   const memberOptions = project.members.map((m) => ({ id: m.user.id, name: m.user.name }));
   const candidates = users.filter((u) => u.id !== user.id).map((u) => ({ id: u.id, name: u.name }));
 

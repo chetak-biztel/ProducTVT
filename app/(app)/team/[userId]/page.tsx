@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireManager } from "@/lib/rbac";
 import { prisma } from "@/lib/db";
 import { getPlanItems, toPlanItemDTOs } from "@/lib/data/plan";
-import { getAllCategories, getCategories, getPlanStatuses } from "@/lib/data/lookups";
+import { getCategories, getPlanStatuses } from "@/lib/data/lookups";
 import { getPlanColumns } from "@/lib/data/plan-columns";
 import { parseWeekKey, weekKey } from "@/lib/week";
 import { PageHeader } from "@/components/page-header";
@@ -28,19 +28,17 @@ export default async function TeamMemberPlanPage({
   const { week } = await searchParams;
   const weekStart = parseWeekKey(week);
 
-  const member = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, role: true, active: true },
-  });
-  if (!member) notFound();
-
-  const [rawItems, categories, allCategories, statuses, columns] = await Promise.all([
-    getPlanItems(member.id, weekStart),
-    getCategories(member.id),
-    getAllCategories(member.id),
-    getPlanStatuses(member.id),
-    getPlanColumns(member.id),
+  const [member, rawItems, categories, statuses, columns] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, role: true, active: true },
+    }),
+    getPlanItems(userId, weekStart),
+    getCategories(userId),
+    getPlanStatuses(userId),
+    getPlanColumns(userId),
   ]);
+  if (!member) notFound();
   const items = toPlanItemDTOs(rawItems);
 
   return (
@@ -66,9 +64,9 @@ export default async function TeamMemberPlanPage({
         weekKey={weekKey(weekStart)}
         items={items}
         categories={categories}
-        allCategories={allCategories}
         statuses={statuses}
         columns={columns}
+        columnsHref={`/team/${member.id}/columns`}
         editable
       />
     </div>

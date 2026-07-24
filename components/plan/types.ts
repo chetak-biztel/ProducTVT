@@ -2,11 +2,15 @@ export type PlanCategory = { id: string; name: string; color: string; active: bo
 export type PlanStatusOpt = { id: string; name: string; color: string; order: number; isDefault: boolean };
 
 export type PlanColumnTypeV = "TEXT" | "DATE" | "NUMBER" | "SELECT" | "MULTI_SELECT";
+export type SystemFieldV = "TITLE" | "CATEGORY" | "STATUS" | "TAG";
 export type PlanColumnOptionDTO = { id: string; name: string; color: string };
 export type PlanColumnDTO = {
   id: string;
   name: string;
   type: PlanColumnTypeV;
+  order: number;
+  systemField: SystemFieldV | null;
+  hidden: boolean;
   options: PlanColumnOptionDTO[];
 };
 

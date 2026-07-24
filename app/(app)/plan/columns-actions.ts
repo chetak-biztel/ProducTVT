@@ -29,21 +29,19 @@ export async function createColumnAction(_prev: ActionState, formData: FormData)
   const user = await requireUser();
   const parsed = createColumnSchema.safeParse({
     ownerId: formData.get("ownerId"),
-    name: formData.get("name"),
+    name: formData.get("columnName"),
     type: formData.get("type"),
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");
   if (!canManageBoardFor(user.id, user.role, parsed.data.ownerId)) return fail("Not authorized");
 
-  const existing = await prisma.planColumn.findUnique({
-    where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
-  });
+  const [existing, last] = await Promise.all([
+    prisma.planColumn.findUnique({
+      where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
+    }),
+    prisma.planColumn.findFirst({ where: { ownerId: parsed.data.ownerId }, orderBy: { order: "desc" } }),
+  ]);
   if (existing) return fail("A column with that name already exists");
-
-  const last = await prisma.planColumn.findFirst({
-    where: { ownerId: parsed.data.ownerId },
-    orderBy: { order: "desc" },
-  });
   await prisma.planColumn.create({
     data: { ...parsed.data, order: (last?.order ?? -1) + 1 },
   });
@@ -67,8 +65,34 @@ export async function deleteColumnAction(id: string) {
   const column = await prisma.planColumn.findUnique({ where: { id } });
   if (!column) return;
   assertCanManage(user.id, user.role, column.ownerId);
+  if (column.systemField) throw new Error("This is a built-in field — hide it instead of deleting it.");
   await prisma.planColumn.delete({ where: { id } });
   revalidateBoard(column.ownerId);
+}
+
+export async function toggleColumnHidden(id: string, hidden: boolean) {
+  const user = await requireUser();
+  const column = await prisma.planColumn.findUnique({ where: { id } });
+  if (!column) return;
+  assertCanManage(user.id, user.role, column.ownerId);
+  if (hidden && column.systemField === "TITLE") throw new Error("The task title can't be hidden — you need it to add tasks.");
+  await prisma.planColumn.update({ where: { id }, data: { hidden } });
+  revalidateBoard(column.ownerId);
+}
+
+/** Persists a new drag-and-drop order for every column (system + custom) at once. */
+export async function reorderColumns(ownerId: string, orderedIds: string[]) {
+  const user = await requireUser();
+  assertCanManage(user.id, user.role, ownerId);
+
+  const owned = await prisma.planColumn.findMany({ where: { ownerId }, select: { id: true } });
+  const ownedIds = new Set(owned.map((c) => c.id));
+  if (!orderedIds.every((id) => ownedIds.has(id))) throw new Error("Invalid column list");
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.planColumn.update({ where: { id }, data: { order: index } })),
+  );
+  revalidateBoard(ownerId);
 }
 
 // ---------- Column options (Select / Multi-select) ----------
@@ -92,15 +116,13 @@ export async function createColumnOptionAction(_prev: ActionState, formData: For
   if (!column) return fail("Column not found");
   if (!canManageBoardFor(user.id, user.role, column.ownerId)) return fail("Not authorized");
 
-  const existing = await prisma.planColumnOption.findUnique({
-    where: { columnId_name: { columnId: parsed.data.columnId, name: parsed.data.name } },
-  });
+  const [existing, last] = await Promise.all([
+    prisma.planColumnOption.findUnique({
+      where: { columnId_name: { columnId: parsed.data.columnId, name: parsed.data.name } },
+    }),
+    prisma.planColumnOption.findFirst({ where: { columnId: parsed.data.columnId }, orderBy: { order: "desc" } }),
+  ]);
   if (existing) return fail("An option with that name already exists");
-
-  const last = await prisma.planColumnOption.findFirst({
-    where: { columnId: parsed.data.columnId },
-    orderBy: { order: "desc" },
-  });
   await prisma.planColumnOption.create({
     data: { ...parsed.data, order: (last?.order ?? -1) + 1 },
   });

@@ -25,7 +25,7 @@ export function CreateTagDialog({
     <FormDialog title={title} action={action} submitText="Add" triggerLabel={triggerLabel} triggerIcon={<Plus size={15} />}>
       <input type="hidden" name="ownerId" value={ownerId} />
       <Field label="Name" htmlFor="name">
-        <input id="name" name="name" className="input" placeholder={namePlaceholder} autoFocus autoComplete="off" />
+        <input id="name" name="tagName" className="input" placeholder={namePlaceholder} autoFocus autoComplete="off" />
       </Field>
       <Field label="Color" htmlFor="color">
         <ColorInput name="color" defaultValue={defaultColor} />

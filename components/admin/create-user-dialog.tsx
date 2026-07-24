@@ -16,13 +16,13 @@ export function CreateUserDialog() {
       triggerIcon={<UserPlus size={15} />}
     >
       <Field label="Full name" htmlFor="name">
-        <input id="name" name="name" className="input" placeholder="e.g. Priya Sharma" autoFocus autoComplete="off" />
+        <input id="name" name="fullName" className="input" placeholder="e.g. Priya Sharma" autoFocus autoComplete="off" />
       </Field>
       <Field label="Username" htmlFor="username" hint="Lowercase letters, numbers, dots or dashes.">
-        <input id="username" name="username" className="input" placeholder="e.g. priya" />
+        <input id="username" name="username" className="input" placeholder="e.g. priya" autoComplete="off" />
       </Field>
       <Field label="Temporary password" htmlFor="password">
-        <input id="password" name="password" type="text" className="input" placeholder="Min. 6 characters" />
+        <input id="password" name="password" type="text" className="input" placeholder="Min. 6 characters" autoComplete="new-password" />
       </Field>
       <Field label="Role" htmlFor="role">
         <select id="role" name="role" className="select" defaultValue="EMPLOYEE">

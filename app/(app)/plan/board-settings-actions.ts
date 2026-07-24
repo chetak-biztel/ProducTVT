@@ -27,21 +27,19 @@ export async function createCategoryAction(_prev: ActionState, formData: FormDat
   const user = await requireUser();
   const parsed = categorySchema.safeParse({
     ownerId: formData.get("ownerId"),
-    name: formData.get("name"),
+    name: formData.get("tagName"),
     color: formData.get("color"),
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");
   if (!canManageBoardFor(user.id, user.role, parsed.data.ownerId)) return fail("Not authorized");
 
-  const existing = await prisma.category.findUnique({
-    where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
-  });
+  const [existing, last] = await Promise.all([
+    prisma.category.findUnique({
+      where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
+    }),
+    prisma.category.findFirst({ where: { ownerId: parsed.data.ownerId }, orderBy: { order: "desc" } }),
+  ]);
   if (existing) return fail("A category with that name already exists");
-
-  const last = await prisma.category.findFirst({
-    where: { ownerId: parsed.data.ownerId },
-    orderBy: { order: "desc" },
-  });
   await prisma.category.create({
     data: { ...parsed.data, order: (last?.order ?? -1) + 1 },
   });
@@ -92,21 +90,19 @@ export async function createStatusAction(_prev: ActionState, formData: FormData)
   const user = await requireUser();
   const parsed = statusSchema.safeParse({
     ownerId: formData.get("ownerId"),
-    name: formData.get("name"),
+    name: formData.get("tagName"),
     color: formData.get("color"),
   });
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid input");
   if (!canManageBoardFor(user.id, user.role, parsed.data.ownerId)) return fail("Not authorized");
 
-  const existing = await prisma.planStatus.findUnique({
-    where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
-  });
+  const [existing, last] = await Promise.all([
+    prisma.planStatus.findUnique({
+      where: { ownerId_name: { ownerId: parsed.data.ownerId, name: parsed.data.name } },
+    }),
+    prisma.planStatus.findFirst({ where: { ownerId: parsed.data.ownerId }, orderBy: { order: "desc" } }),
+  ]);
   if (existing) return fail("A status with that name already exists");
-
-  const last = await prisma.planStatus.findFirst({
-    where: { ownerId: parsed.data.ownerId },
-    orderBy: { order: "desc" },
-  });
   await prisma.planStatus.create({
     data: { ...parsed.data, order: (last?.order ?? -1) + 1 },
   });

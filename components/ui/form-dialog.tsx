@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2 } from "lucide-react";
 import type { ActionState } from "@/lib/actions/types";
@@ -105,7 +105,12 @@ export function FormDialog({
                   // error. Dispatching manually here means the form only clears when we
                   // explicitly call formRef.current.reset() below, on confirmed success.
                   e.preventDefault();
-                  formAction(new FormData(e.currentTarget));
+                  const formData = new FormData(e.currentTarget);
+                  // useActionState's dispatch needs an explicit transition when invoked
+                  // outside the declarative `action` prop, or `pending` won't update.
+                  startTransition(() => {
+                    formAction(formData);
+                  });
                 }}
                 className="px-5 pb-5 space-y-4"
               >

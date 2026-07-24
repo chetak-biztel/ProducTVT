@@ -17,10 +17,10 @@ export default async function AdminConfigPage() {
       </section>
 
       <section className="card p-5">
-        <h2 className="font-semibold text-[var(--text)]">Plan statuses & categories</h2>
+        <h2 className="font-semibold text-[var(--text)]">Plan columns</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Each person manages their own statuses and category tags now — open{" "}
-          <span className="font-medium text-[var(--text)]">My Plan → Table settings</span> to edit yours. As a manager, you can
+          Each person manages their own Title/Category/Status/Tag and custom columns now — open{" "}
+          <span className="font-medium text-[var(--text)]">My Weekly Plan → Edit Columns</span> to edit yours. As a manager, you can
           also edit a teammate&apos;s from their page under <span className="font-medium text-[var(--text)]">Team</span>.
         </p>
       </section>

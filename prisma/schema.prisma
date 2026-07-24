@@ -54,6 +54,16 @@ enum PlanColumnType {
   MULTI_SELECT
 }
 
+/** Marks a PlanColumn as backed by a dedicated PlanItem field (Title/Category/Status/Tag)
+    instead of the generic PlanItemValue store — lets those fields share the same
+    reorder/rename/hide UI as user-defined columns. */
+enum SystemField {
+  TITLE
+  CATEGORY
+  STATUS
+  TAG
+}
+
 model User {
   id           String   @id @default(cuid())
   username     String   @unique
@@ -136,11 +146,13 @@ model PlanItem {
 // ---- Custom (user-defined) plan columns ----
 
 model PlanColumn {
-  id      String         @id @default(cuid())
-  ownerId String
-  name    String
-  type    PlanColumnType
-  order   Int            @default(0)
+  id          String         @id @default(cuid())
+  ownerId     String
+  name        String
+  type        PlanColumnType
+  order       Int            @default(0)
+  systemField SystemField?
+  hidden      Boolean        @default(false)
 
   owner   User               @relation("PlanColumnOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   options PlanColumnOption[]
@@ -247,6 +259,7 @@ model ProjectMember {
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
+  @@index([userId])
 }
 
 model ProjectSection {

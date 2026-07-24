@@ -26,70 +26,77 @@ export function PlanTable({
     await updatePlanItemField({ id, field, value });
   }
 
+  const visibleColumns = columns.filter((c) => !c.hidden).sort((a, b) => a.order - b.order);
+
   if (items.length === 0) {
     return (
-      <div className="card px-4 py-10 text-center text-sm text-[var(--text-muted)]">
+      <div className="card w-full px-4 py-10 text-center text-sm text-[var(--text-muted)]">
         No tasks for this week yet.
       </div>
     );
   }
 
   return (
-    <div className="card overflow-x-auto scroll-thin">
+    <div className="card w-full overflow-x-auto scroll-thin">
       <table className="w-full min-w-[720px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-[var(--border)] text-left text-xs uppercase tracking-wide text-[var(--text-faint)]">
-            <th className="w-40 px-3 py-2.5 font-medium">Category</th>
-            <th className="px-3 py-2.5 font-medium">Task</th>
-            <th className="w-44 px-3 py-2.5 font-medium">Status</th>
-            {showReview && <th className="w-56 px-3 py-2.5 font-medium">Review</th>}
-            {columns.map((c) => (
-              <th key={c.id} className="w-40 px-3 py-2.5 font-medium">
+            {visibleColumns.map((c) => (
+              <th key={c.id} className={c.systemField === "TITLE" ? "px-3 py-2.5 font-medium" : "w-40 px-3 py-2.5 font-medium"}>
                 {c.name}
               </th>
             ))}
+            {showReview && <th className="w-56 px-3 py-2.5 font-medium">Review</th>}
             {editable && <th className="w-10 px-2 py-2.5" />}
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
             <tr key={item.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[color-mix(in_srgb,var(--accent)_4%,white)] group">
-              <td className="px-3 py-2 align-top">
-                <div className="flex flex-col gap-1">
-                  <PillSelect
-                    value={item.category?.id}
-                    options={categories}
-                    disabled={!editable}
-                    onChange={(id) => save(item.id, "categoryId", id)}
-                    placeholder="Category"
-                  />
-                  <InlineText
-                    value={item.subTag ?? ""}
-                    onSave={(v) => save(item.id, "subTag", v)}
-                    disabled={!editable}
-                    placeholder="+ tag"
-                    className="text-xs text-[var(--text-faint)]"
-                  />
-                </div>
-              </td>
-              <td className="px-3 py-2 align-top">
-                <InlineText
-                  value={item.title}
-                  onSave={(v) => save(item.id, "title", v)}
-                  disabled={!editable}
-                  className="font-medium text-[var(--text)]"
-                />
-              </td>
-              <td className="px-3 py-2 align-top">
-                <PillSelect
-                  value={item.status?.id}
-                  options={statuses}
-                  disabled={!editable}
-                  allowClear={false}
-                  onChange={(id) => save(item.id, "statusId", id)}
-                  placeholder="Status"
-                />
-              </td>
+              {visibleColumns.map((c) => (
+                <td key={c.id} className="px-3 py-2 align-top">
+                  {c.systemField === "TITLE" ? (
+                    <InlineText
+                      value={item.title}
+                      onSave={(v) => save(item.id, "title", v)}
+                      disabled={!editable}
+                      className="font-medium text-[var(--text)]"
+                    />
+                  ) : c.systemField === "CATEGORY" ? (
+                    <PillSelect
+                      value={item.category?.id}
+                      options={categories}
+                      disabled={!editable}
+                      onChange={(id) => save(item.id, "categoryId", id)}
+                      placeholder="Category"
+                    />
+                  ) : c.systemField === "STATUS" ? (
+                    <PillSelect
+                      value={item.status?.id}
+                      options={statuses}
+                      disabled={!editable}
+                      allowClear={false}
+                      onChange={(id) => save(item.id, "statusId", id)}
+                      placeholder="Status"
+                    />
+                  ) : c.systemField === "TAG" ? (
+                    <InlineText
+                      value={item.subTag ?? ""}
+                      onSave={(v) => save(item.id, "subTag", v)}
+                      disabled={!editable}
+                      placeholder="+ tag"
+                      className="text-xs text-[var(--text-faint)]"
+                    />
+                  ) : (
+                    <CustomCell
+                      planItemId={item.id}
+                      column={c}
+                      value={item.values.find((v) => v.columnId === c.id)}
+                      editable={editable}
+                    />
+                  )}
+                </td>
+              ))}
               {showReview && (
                 <td className="px-3 py-2 align-top">
                   <InlineText
@@ -102,16 +109,6 @@ export function PlanTable({
                   />
                 </td>
               )}
-              {columns.map((c) => (
-                <td key={c.id} className="px-3 py-2 align-top">
-                  <CustomCell
-                    planItemId={item.id}
-                    column={c}
-                    value={item.values.find((v) => v.columnId === c.id)}
-                    editable={editable}
-                  />
-                </td>
-              ))}
               {editable && (
                 <td className="px-2 py-2 align-top text-right">
                   <button

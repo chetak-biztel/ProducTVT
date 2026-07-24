@@ -15,6 +15,7 @@ export function PillSelect({
   placeholder = "Set…",
   disabled = false,
   allowClear = true,
+  fillHeight = false,
 }: {
   value?: string | null;
   options: PillOption[];
@@ -22,6 +23,8 @@ export function PillSelect({
   placeholder?: string;
   disabled?: boolean;
   allowClear?: boolean;
+  /** Stretches the pill to fill a fixed-height parent (e.g. a toolbar row), instead of its natural compact size. */
+  fillHeight?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -78,17 +81,25 @@ export function PillSelect({
         onClick={() => setOpen((v) => !v)}
         className={cn(
           "inline-flex items-center gap-1 rounded-full transition-opacity",
+          fillHeight && "h-full",
           disabled ? "cursor-default" : "cursor-pointer hover:opacity-80",
         )}
       >
         {pending ? (
-          <Pill dot={false}>
+          <Pill dot={false} className={fillHeight ? "h-full !py-0" : undefined}>
             <Loader2 size={12} className="animate-spin" />
           </Pill>
         ) : selected ? (
-          <Pill color={selected.color}>{selected.name}</Pill>
+          <Pill color={selected.color} className={fillHeight ? "h-full !py-0" : undefined}>
+            {selected.name}
+          </Pill>
         ) : (
-          <span className="pill !bg-transparent !border-dashed text-[var(--text-faint)]">
+          <span
+            className={cn(
+              "pill !bg-transparent !border-dashed text-[var(--text-faint)]",
+              fillHeight && "h-full !py-0",
+            )}
+          >
             {placeholder}
           </span>
         )}

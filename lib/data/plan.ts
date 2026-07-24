@@ -33,21 +33,16 @@ export function toPlanItemDTOs(items: Awaited<ReturnType<typeof getPlanItems>>):
   }));
 }
 
-export async function getPlanWeekSummary(ownerId: string, weekStartDate: Date) {
-  const items = await getPlanItems(ownerId, weekStartDate);
-  const total = items.length;
-  const done = items.filter((i) => i.status?.name === "Done").length;
-  return { total, done };
-}
-
 /** Per-user task counts for a week, keyed by userId. Used by the team roster. */
 export async function getTeamWeekCounts(weekStartDate: Date) {
-  const rows = await prisma.planItem.groupBy({
-    by: ["ownerId", "statusId"],
-    where: { weekStartDate },
-    _count: { _all: true },
-  });
-  const doneStatus = await prisma.planStatus.findFirst({ where: { name: "Done" } });
+  const [rows, doneStatus] = await Promise.all([
+    prisma.planItem.groupBy({
+      by: ["ownerId", "statusId"],
+      where: { weekStartDate },
+      _count: { _all: true },
+    }),
+    prisma.planStatus.findFirst({ where: { name: "Done" } }),
+  ]);
 
   const byOwner = new Map<string, { total: number; done: number }>();
   for (const row of rows) {

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
@@ -36,7 +37,7 @@ function buildLinks(role: string) {
   const isManager = role === "FOUNDER" || role === "MANAGER";
   const links = [
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-    { href: "/plan", label: "My Plan", icon: "plan" },
+    { href: "/plan", label: "My Weekly Plan", icon: "plan" },
     { href: "/todos", label: "Todos", icon: "todos" },
     { href: "/projects", label: "Projects", icon: "projects" },
   ];
@@ -84,12 +85,7 @@ export function Nav({ user }: { user: NavUser }) {
 
   const Brand = (
     <Link href="/dashboard" className="flex items-center gap-2.5 px-1" onClick={() => setOpen(false)}>
-      <span
-        className="grid h-8 w-8 place-items-center rounded-xl text-[var(--accent-fg)] font-bold"
-        style={{ background: "var(--accent)" }}
-      >
-        V
-      </span>
+      <Image src="/logo.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-xl" priority />
       <span className="font-semibold tracking-tight text-[var(--text)]">ProducTVT</span>
     </Link>
   );

@@ -20,7 +20,7 @@ export function ResetPasswordDialog({ userId, name }: { userId: string; name: st
     >
       <input type="hidden" name="userId" value={userId} />
       <Field label="New password" htmlFor="password">
-        <input id="password" name="password" type="text" className="input" placeholder="Min. 6 characters" />
+        <input id="password" name="password" type="text" className="input" placeholder="Min. 6 characters" autoComplete="new-password" />
       </Field>
     </FormDialog>
   );

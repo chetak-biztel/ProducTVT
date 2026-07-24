@@ -20,7 +20,7 @@ export function CreateProjectDialog({ allUsers }: { allUsers: { id: string; name
       wide
     >
       <Field label="Project name" htmlFor="name">
-        <input id="name" name="name" className="input" placeholder="e.g. UPE BlockLine" autoFocus autoComplete="off" />
+        <input id="name" name="projectName" className="input" placeholder="e.g. UPE BlockLine" autoFocus autoComplete="off" />
       </Field>
       <Field label="Description" htmlFor="description">
         <textarea id="description" name="description" rows={2} className="textarea" placeholder="What's this project about?" />

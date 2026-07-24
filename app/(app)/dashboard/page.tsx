@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CalendarRange, CheckSquare, FolderKanban } from "lucide-react";
 import { requireUser } from "@/lib/rbac";
-import { getPlanItems, getPlanWeekSummary } from "@/lib/data/plan";
+import { getPlanItems } from "@/lib/data/plan";
 import { getOpenTodoCount, getUpcomingTodos } from "@/lib/data/dashboard";
 import { getProjectsForUser } from "@/lib/data/projects";
 import { currentWeekStart, formatDayShort, formatWeekRange, weekKey } from "@/lib/week";
@@ -24,13 +24,13 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const weekStart = currentWeekStart();
 
-  const [planItems, planSummary, openTodoCount, upcomingTodos, projectsRaw] = await Promise.all([
+  const [planItems, openTodoCount, upcomingTodos, projectsRaw] = await Promise.all([
     getPlanItems(user.id, weekStart),
-    getPlanWeekSummary(user.id, weekStart),
     getOpenTodoCount(user.id),
     getUpcomingTodos(user.id, 5),
     getProjectsForUser(user.id),
   ]);
+  const planSummary = { total: planItems.length, done: planItems.filter((i) => i.status?.name === "Done").length };
 
   const projects: ProjectListItemDTO[] = projectsRaw.slice(0, 3).map((p) => ({
     id: p.id,

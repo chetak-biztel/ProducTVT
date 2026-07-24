@@ -18,7 +18,7 @@ export function AddColumnDialog({ ownerId }: { ownerId: string }) {
     >
       <input type="hidden" name="ownerId" value={ownerId} />
       <Field label="Name" htmlFor="col-name">
-        <input id="col-name" name="name" className="input" placeholder="e.g. Due Date" autoFocus autoComplete="off" />
+        <input id="col-name" name="columnName" className="input" placeholder="e.g. Due Date" autoFocus autoComplete="off" />
       </Field>
       <Field label="Type" htmlFor="col-type" hint="Select/Multi-select let you define your own list of tags for this column.">
         <select id="col-type" name="type" className="select" defaultValue="TEXT">
