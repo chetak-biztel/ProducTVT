@@ -10,7 +10,10 @@ export default async function AdminConfigPage() {
     <div className="space-y-8">
       <section className="card p-5">
         <h2 className="font-semibold text-[var(--text)]">Accent color</h2>
-        <p className="mt-1 text-sm text-[var(--text-muted)]">Sets the app-wide accent used for buttons, links and highlights.</p>
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          Sets the workspace-wide default accent. Anyone can override it for themselves under{" "}
+          <span className="font-medium text-[var(--text)]">Settings → Appearance</span>.
+        </p>
         <div className="mt-4">
           <AccentPicker current={accent} />
         </div>

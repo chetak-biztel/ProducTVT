@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
@@ -27,5 +28,25 @@ export async function changeOwnPasswordAction(_prev: ActionState, formData: Form
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  return ok;
+}
+
+const accentSchema = z.object({ color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Pick a valid color") });
+
+export async function setOwnAccentColorAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const parsed = accentSchema.safeParse({ color: formData.get("color") });
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Invalid color");
+
+  await prisma.user.update({ where: { id: user.id }, data: { accentColor: parsed.data.color } });
+  revalidatePath("/", "layout");
+  return ok;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature required by useActionState
+export async function clearOwnAccentColorAction(_prev: ActionState, _formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  await prisma.user.update({ where: { id: user.id }, data: { accentColor: null } });
+  revalidatePath("/", "layout");
   return ok;
 }

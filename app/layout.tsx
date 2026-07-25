@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getAccentColor, readableForeground } from "@/lib/theme";
+import { getEffectiveAccentColor, readableForeground } from "@/lib/theme";
 
 export const metadata: Metadata = {
   title: "ProducTVT — Team Plans & Projects",
@@ -12,7 +12,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const accent = await getAccentColor();
+  const accent = await getEffectiveAccentColor();
   const accentFg = readableForeground(accent);
 
   return (

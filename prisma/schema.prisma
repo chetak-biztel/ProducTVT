@@ -72,6 +72,7 @@ model User {
   passwordHash String
   role         Role     @default(EMPLOYEE)
   active       Boolean  @default(true)
+  accentColor  String?
   createdAt    DateTime @default(now())
 
   // relations
