@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
 import { canAccessProject } from "@/lib/data/projects";
+import { syncTaskAssignee, syncTaskDone } from "@/lib/data/task-links";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
 const DEFAULT_SECTIONS: { name: string; type: "HARDWARE" | "SOFTWARE" | "PROJECT_MGMT" }[] = [
@@ -192,7 +193,7 @@ export async function createTaskAction(_prev: ActionState, formData: FormData): 
     orderBy: { order: "desc" },
   });
 
-  await prisma.projectTask.create({
+  const task = await prisma.projectTask.create({
     data: {
       projectId: parsed.data.projectId,
       sectionId: parsed.data.sectionId,
@@ -202,6 +203,7 @@ export async function createTaskAction(_prev: ActionState, formData: FormData): 
       order: (last?.order ?? -1) + 1,
     },
   });
+  if (task.assigneeId) await syncTaskAssignee(task.id);
   revalidateProject(parsed.data.projectId);
   return ok;
 }
@@ -212,6 +214,7 @@ export async function setTaskStatus(taskId: string, projectId: string, status: s
   const valid = ["TODO", "DOING", "DONE"];
   if (!valid.includes(status)) throw new Error("Invalid status");
   await prisma.projectTask.update({ where: { id: taskId }, data: { status: status as never } });
+  await syncTaskDone(taskId, status === "DONE", "task");
   revalidateProject(projectId);
 }
 
@@ -219,6 +222,7 @@ export async function setTaskAssignee(taskId: string, projectId: string, assigne
   const user = await requireUser();
   await assertMember(projectId, user.id);
   await prisma.projectTask.update({ where: { id: taskId }, data: { assigneeId: assigneeId || null } });
+  await syncTaskAssignee(taskId);
   revalidateProject(projectId);
 }
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
+import { syncTaskDone } from "@/lib/data/task-links";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
 function parseTags(raw: FormDataEntryValue | null): string[] {
@@ -19,7 +20,7 @@ function parseTags(raw: FormDataEntryValue | null): string[] {
 }
 
 async function assertOwner(todoId: string, userId: string) {
-  const todo = await prisma.todo.findUnique({ where: { id: todoId }, select: { ownerId: true } });
+  const todo = await prisma.todo.findUnique({ where: { id: todoId }, select: { ownerId: true, sourceTaskId: true } });
   if (!todo || todo.ownerId !== userId) throw new Error("Not authorized");
   return todo;
 }
@@ -120,8 +121,9 @@ export async function updateTodoField(input: { id: string; field: string; value:
 
 export async function toggleTodoDone(id: string, done: boolean) {
   const user = await requireUser();
-  await assertOwner(id, user.id);
+  const todo = await assertOwner(id, user.id);
   await prisma.todo.update({ where: { id }, data: { done } });
+  if (todo.sourceTaskId) await syncTaskDone(todo.sourceTaskId, done, "todo");
   revalidatePath("/todos");
   revalidatePath("/dashboard");
 }

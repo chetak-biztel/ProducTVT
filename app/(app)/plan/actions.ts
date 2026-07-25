@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser, isManagerOrAbove, canManageBoardFor } from "@/lib/rbac";
 import { parseWeekKey, weekKey } from "@/lib/week";
+import { syncTaskDone } from "@/lib/data/task-links";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
 const canEditPlanFor = canManageBoardFor;
@@ -141,6 +142,12 @@ export async function updatePlanItemField(input: { id: string; field: string; va
   }
 
   await prisma.planItem.update({ where: { id }, data });
+
+  if (field === "statusId" && item.sourceTaskId) {
+    const status = value ? await prisma.planStatus.findUnique({ where: { id: value } }) : null;
+    await syncTaskDone(item.sourceTaskId, status?.name === "Done", "planItem");
+  }
+
   revalidatePlan(item.ownerId, item.weekStartDate);
 }
 
@@ -152,4 +159,21 @@ export async function deletePlanItem(id: string) {
 
   await prisma.planItem.delete({ where: { id } });
   revalidatePlan(item.ownerId, item.weekStartDate);
+}
+
+/** Persists a new drag-and-drop row order for a set of tasks (must all belong to one owner). */
+export async function reorderPlanItems(ownerId: string, orderedIds: string[]) {
+  const user = await requireUser();
+  if (!canEditPlanFor(user.id, user.role, ownerId)) throw new Error("Not authorized");
+
+  const owned = await prisma.planItem.findMany({
+    where: { id: { in: orderedIds }, ownerId },
+    select: { id: true, weekStartDate: true },
+  });
+  if (owned.length !== orderedIds.length) throw new Error("Invalid item list");
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.planItem.update({ where: { id }, data: { order: index } })),
+  );
+  revalidatePlan(ownerId, owned[0].weekStartDate);
 }
