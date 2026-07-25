@@ -33,6 +33,8 @@ export function PillSelect({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.id === value);
+  // Size every pill in this column to the widest option, so short and long values line up (Excel-style column width).
+  const widthCh = Math.max(placeholder.length, ...options.map((o) => o.name.length));
 
   useEffect(() => {
     if (!open) return;
@@ -79,6 +81,7 @@ export function PillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        style={{ minWidth: `calc(${widthCh}ch + 2.5rem)` }}
         className={cn(
           "inline-flex items-center gap-1 rounded-full transition-opacity",
           fillHeight && "h-full",
@@ -86,17 +89,17 @@ export function PillSelect({
         )}
       >
         {pending ? (
-          <Pill dot={false} className={fillHeight ? "h-full !py-0" : undefined}>
+          <Pill dot={false} className={cn("flex-1", fillHeight && "h-full !py-0")}>
             <Loader2 size={12} className="animate-spin" />
           </Pill>
         ) : selected ? (
-          <Pill color={selected.color} className={fillHeight ? "h-full !py-0" : undefined}>
+          <Pill color={selected.color} className={cn("flex-1", fillHeight && "h-full !py-0")}>
             {selected.name}
           </Pill>
         ) : (
           <span
             className={cn(
-              "pill !bg-transparent !border-dashed text-[var(--text-faint)]",
+              "pill flex-1 !bg-transparent !border-dashed text-[var(--text-faint)]",
               fillHeight && "h-full !py-0",
             )}
           >

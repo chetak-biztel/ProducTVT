@@ -29,6 +29,8 @@ export function MultiPillSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const selected = options.filter((o) => values.includes(o.id));
+  // Reserve at least as much room as the widest option, so this lines up with other pill columns.
+  const widthCh = Math.max(placeholder.length, ...options.map((o) => o.name.length));
 
   useEffect(() => {
     if (!open) return;
@@ -71,6 +73,7 @@ export function MultiPillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
+        style={{ minWidth: `calc(${widthCh}ch + 2.5rem)` }}
         className={cn(
           "inline-flex flex-wrap items-center gap-1 rounded-md px-1 py-0.5 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100",
           fillHeight && "h-full",
