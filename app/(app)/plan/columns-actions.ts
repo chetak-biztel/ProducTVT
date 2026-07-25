@@ -80,6 +80,17 @@ export async function toggleColumnHidden(id: string, hidden: boolean) {
   revalidateBoard(column.ownerId);
 }
 
+/** Persists a manually dragged column width (in px); pass null to go back to the default. */
+export async function setColumnWidth(id: string, width: number | null) {
+  const user = await requireUser();
+  const column = await prisma.planColumn.findUnique({ where: { id } });
+  if (!column) return;
+  assertCanManage(user.id, user.role, column.ownerId);
+  const clamped = width == null ? null : Math.round(Math.min(600, Math.max(48, width)));
+  await prisma.planColumn.update({ where: { id }, data: { width: clamped } });
+  revalidateBoard(column.ownerId);
+}
+
 /** Persists a new drag-and-drop order for every column (system + custom) at once. */
 export async function reorderColumns(ownerId: string, orderedIds: string[]) {
   const user = await requireUser();

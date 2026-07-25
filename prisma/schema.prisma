@@ -154,6 +154,7 @@ model PlanColumn {
   order       Int            @default(0)
   systemField SystemField?
   hidden      Boolean        @default(false)
+  width       Int?
 
   owner   User               @relation("PlanColumnOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   options PlanColumnOption[]

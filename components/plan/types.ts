@@ -11,6 +11,7 @@ export type PlanColumnDTO = {
   order: number;
   systemField: SystemFieldV | null;
   hidden: boolean;
+  width: number | null;
   options: PlanColumnOptionDTO[];
 };
 

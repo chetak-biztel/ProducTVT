@@ -6,6 +6,7 @@ import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { Pill } from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
 import type { PillOption } from "@/components/plan/pill-select";
+import { placeMenu } from "@/components/plan/menu-position";
 
 export function MultiPillSelect({
   values,
@@ -14,7 +15,7 @@ export function MultiPillSelect({
   placeholder = "Select…",
   disabled = false,
   fillHeight = false,
-  minWidthCh = 0,
+  fillWidth = false,
 }: {
   values: string[];
   options: PillOption[];
@@ -23,12 +24,12 @@ export function MultiPillSelect({
   disabled?: boolean;
   /** Stretches pills to fill a fixed-height parent (e.g. a toolbar row), instead of their natural compact size. */
   fillHeight?: boolean;
-  /** Reserves this many characters of width, so every pill in a table column matches the widest value actually selected in it. */
-  minWidthCh?: number;
+  /** Fills the width of the parent cell exactly, wrapping/truncating chips instead of forcing the column wider — for use inside a resizable table column. */
+  fillWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const selected = options.filter((o) => values.includes(o.id));
@@ -37,7 +38,8 @@ export function MultiPillSelect({
     if (!open) return;
     const place = () => {
       const r = triggerRef.current?.getBoundingClientRect();
-      if (r) setPos({ top: r.bottom + 6, left: r.left, width: Math.max(r.width, 180) });
+      if (!r) return;
+      setPos(placeMenu(r));
     };
     place();
     window.addEventListener("scroll", place, true);
@@ -74,10 +76,10 @@ export function MultiPillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        style={minWidthCh > 0 ? { minWidth: `calc(${minWidthCh}ch + 2.5rem)` } : undefined}
         className={cn(
           "inline-flex flex-wrap items-center gap-1 rounded-md px-1 py-0.5 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100",
           fillHeight && "h-full",
+          fillWidth && "w-full min-w-0 overflow-hidden",
         )}
       >
         {pending ? (
@@ -88,12 +90,12 @@ export function MultiPillSelect({
           </span>
         ) : (
           selected.map((o) => (
-            <Pill key={o.id} color={o.color} className={fillHeight ? "h-full !py-0" : undefined}>
-              {o.name}
+            <Pill key={o.id} color={o.color} className={cn(fillWidth && "max-w-full", fillHeight ? "h-full !py-0" : undefined)}>
+              <span className={fillWidth ? "truncate" : undefined}>{o.name}</span>
             </Pill>
           ))
         )}
-        {!disabled && <ChevronDown size={12} className="text-[var(--text-faint)]" />}
+        {!disabled && <ChevronDown size={12} className="shrink-0 text-[var(--text-faint)]" />}
       </button>
 
       {open &&
@@ -101,8 +103,15 @@ export function MultiPillSelect({
         createPortal(
           <div
             ref={menuRef}
-            className="card animate-in fixed z-50 max-h-64 overflow-y-auto scroll-thin p-1.5"
-            style={{ top: pos.top, left: pos.left, minWidth: pos.width, boxShadow: "var(--shadow)" }}
+            className="card animate-in fixed z-50 overflow-y-auto scroll-thin p-1.5"
+            style={{
+              top: pos.top,
+              bottom: pos.bottom,
+              left: pos.left,
+              minWidth: pos.width,
+              maxHeight: pos.maxHeight,
+              boxShadow: "var(--shadow)",
+            }}
           >
             {options.map((o) => (
               <button

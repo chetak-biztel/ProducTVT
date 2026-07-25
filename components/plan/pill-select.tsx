@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Pill } from "@/components/ui/pill";
 import { cn } from "@/lib/utils";
+import { placeMenu } from "@/components/plan/menu-position";
 
 export type PillOption = { id: string; name: string; color?: string };
 
@@ -16,7 +17,7 @@ export function PillSelect({
   disabled = false,
   allowClear = true,
   fillHeight = false,
-  minWidthCh = 0,
+  fillWidth = false,
 }: {
   value?: string | null;
   options: PillOption[];
@@ -26,12 +27,12 @@ export function PillSelect({
   allowClear?: boolean;
   /** Stretches the pill to fill a fixed-height parent (e.g. a toolbar row), instead of its natural compact size. */
   fillHeight?: boolean;
-  /** Reserves this many characters of width, so every pill in a table column matches the widest value actually selected in it. */
-  minWidthCh?: number;
+  /** Fills the width of the parent cell exactly, truncating the label instead of forcing the column wider — for use inside a resizable table column. */
+  fillWidth?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -41,7 +42,8 @@ export function PillSelect({
     if (!open) return;
     const place = () => {
       const r = triggerRef.current?.getBoundingClientRect();
-      if (r) setPos({ top: r.bottom + 6, left: r.left, width: Math.max(r.width, 180) });
+      if (!r) return;
+      setPos(placeMenu(r));
     };
     place();
     window.addEventListener("scroll", place, true);
@@ -82,32 +84,33 @@ export function PillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        style={minWidthCh > 0 ? { minWidth: `calc(${minWidthCh}ch + 2.5rem)` } : undefined}
         className={cn(
           "inline-flex items-center gap-1 rounded-full transition-opacity",
           fillHeight && "h-full",
+          fillWidth && "w-full min-w-0 overflow-hidden",
           disabled ? "cursor-default" : "cursor-pointer hover:opacity-80",
         )}
       >
         {pending ? (
-          <Pill dot={false} className={cn("flex-1", fillHeight && "h-full !py-0")}>
+          <Pill dot={false} className={cn(fillWidth && "flex-1 min-w-0", fillHeight && "h-full !py-0")}>
             <Loader2 size={12} className="animate-spin" />
           </Pill>
         ) : selected ? (
-          <Pill color={selected.color} className={cn("flex-1", fillHeight && "h-full !py-0")}>
-            {selected.name}
+          <Pill color={selected.color} className={cn(fillWidth && "flex-1 min-w-0", fillHeight && "h-full !py-0")}>
+            <span className={fillWidth ? "truncate" : undefined}>{selected.name}</span>
           </Pill>
         ) : (
           <span
             className={cn(
-              "pill flex-1 !bg-transparent !border-dashed text-[var(--text-faint)]",
+              "pill !bg-transparent !border-dashed text-[var(--text-faint)]",
+              fillWidth && "flex-1 min-w-0",
               fillHeight && "h-full !py-0",
             )}
           >
-            {placeholder}
+            <span className={fillWidth ? "truncate" : undefined}>{placeholder}</span>
           </span>
         )}
-        {!disabled && <ChevronDown size={12} className="text-[var(--text-faint)]" />}
+        {!disabled && <ChevronDown size={12} className="shrink-0 text-[var(--text-faint)]" />}
       </button>
 
       {open &&
@@ -115,8 +118,15 @@ export function PillSelect({
         createPortal(
           <div
             ref={menuRef}
-            className="card animate-in fixed z-50 max-h-64 overflow-y-auto scroll-thin p-1.5"
-            style={{ top: pos.top, left: pos.left, minWidth: pos.width, boxShadow: "var(--shadow)" }}
+            className="card animate-in fixed z-50 overflow-y-auto scroll-thin p-1.5"
+            style={{
+              top: pos.top,
+              bottom: pos.bottom,
+              left: pos.left,
+              minWidth: pos.width,
+              maxHeight: pos.maxHeight,
+              boxShadow: "var(--shadow)",
+            }}
           >
             {allowClear && value && (
               <button
