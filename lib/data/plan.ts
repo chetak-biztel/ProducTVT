@@ -35,20 +35,23 @@ export function toPlanItemDTOs(items: Awaited<ReturnType<typeof getPlanItems>>):
 
 /** Per-user task counts for a week, keyed by userId. Used by the team roster. */
 export async function getTeamWeekCounts(weekStartDate: Date) {
-  const [rows, doneStatus] = await Promise.all([
+  const [rows, doneStatuses] = await Promise.all([
     prisma.planItem.groupBy({
       by: ["ownerId", "statusId"],
       where: { weekStartDate },
       _count: { _all: true },
     }),
-    prisma.planStatus.findFirst({ where: { name: "Done" } }),
+    prisma.planStatus.findMany({ where: { name: "Done" } }),
   ]);
+
+  // Each user has their own "Done" status row, so match per-owner rather than by a single id.
+  const doneStatusIdByOwner = new Map(doneStatuses.map((s) => [s.ownerId, s.id]));
 
   const byOwner = new Map<string, { total: number; done: number }>();
   for (const row of rows) {
     const entry = byOwner.get(row.ownerId) ?? { total: 0, done: 0 };
     entry.total += row._count._all;
-    if (doneStatus && row.statusId === doneStatus.id) entry.done += row._count._all;
+    if (row.statusId && row.statusId === doneStatusIdByOwner.get(row.ownerId)) entry.done += row._count._all;
     byOwner.set(row.ownerId, entry);
   }
   return byOwner;
