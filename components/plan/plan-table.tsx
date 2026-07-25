@@ -28,6 +28,26 @@ export function PlanTable({
 
   const visibleColumns = columns.filter((c) => !c.hidden).sort((a, b) => a.order - b.order);
 
+  // Widest value actually selected in each column (across all rows), so every pill in that
+  // column matches its biggest occupant instead of hugging its own text or the full option catalog.
+  const columnMinWidthCh = new Map<string, number>(
+    visibleColumns.map((c) => {
+      let max = 0;
+      if (c.systemField === "CATEGORY") {
+        for (const item of items) max = Math.max(max, item.category?.name.length ?? 0);
+      } else if (c.systemField === "STATUS") {
+        for (const item of items) max = Math.max(max, item.status?.name.length ?? 0);
+      } else if (c.type === "SELECT" || c.type === "MULTI_SELECT") {
+        const nameById = new Map(c.options.map((o) => [o.id, o.name]));
+        for (const item of items) {
+          const v = item.values.find((vv) => vv.columnId === c.id);
+          for (const id of v?.optionIds ?? []) max = Math.max(max, nameById.get(id)?.length ?? 0);
+        }
+      }
+      return [c.id, max];
+    }),
+  );
+
   if (items.length === 0) {
     return (
       <div className="card w-full px-4 py-10 text-center text-sm text-[var(--text-muted)]">
@@ -42,7 +62,16 @@ export function PlanTable({
         <thead>
           <tr className="border-b border-[var(--border)] text-left text-xs uppercase tracking-wide text-[var(--text-faint)]">
             {visibleColumns.map((c) => (
-              <th key={c.id} className={c.systemField === "TITLE" ? "px-3 py-2.5 font-medium" : "w-40 px-3 py-2.5 font-medium"}>
+              <th
+                key={c.id}
+                className={
+                  c.systemField === "TITLE"
+                    ? "px-3 py-2.5 font-medium"
+                    : c.systemField === "TAG"
+                      ? "w-16 px-3 py-2.5 font-medium"
+                      : "w-40 px-3 py-2.5 font-medium"
+                }
+              >
                 {c.name}
               </th>
             ))}
@@ -69,6 +98,7 @@ export function PlanTable({
                       disabled={!editable}
                       onChange={(id) => save(item.id, "categoryId", id)}
                       placeholder="Category"
+                      minWidthCh={columnMinWidthCh.get(c.id)}
                     />
                   ) : c.systemField === "STATUS" ? (
                     <PillSelect
@@ -78,6 +108,7 @@ export function PlanTable({
                       allowClear={false}
                       onChange={(id) => save(item.id, "statusId", id)}
                       placeholder="Status"
+                      minWidthCh={columnMinWidthCh.get(c.id)}
                     />
                   ) : c.systemField === "TAG" ? (
                     <InlineText
@@ -93,6 +124,7 @@ export function PlanTable({
                       column={c}
                       value={item.values.find((v) => v.columnId === c.id)}
                       editable={editable}
+                      minWidthCh={columnMinWidthCh.get(c.id)}
                     />
                   )}
                 </td>

@@ -16,6 +16,7 @@ export function PillSelect({
   disabled = false,
   allowClear = true,
   fillHeight = false,
+  minWidthCh = 0,
 }: {
   value?: string | null;
   options: PillOption[];
@@ -25,6 +26,8 @@ export function PillSelect({
   allowClear?: boolean;
   /** Stretches the pill to fill a fixed-height parent (e.g. a toolbar row), instead of its natural compact size. */
   fillHeight?: boolean;
+  /** Reserves this many characters of width, so every pill in a table column matches the widest value actually selected in it. */
+  minWidthCh?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -33,8 +36,6 @@ export function PillSelect({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const selected = options.find((o) => o.id === value);
-  // Size every pill in this column to the widest option, so short and long values line up (Excel-style column width).
-  const widthCh = Math.max(placeholder.length, ...options.map((o) => o.name.length));
 
   useEffect(() => {
     if (!open) return;
@@ -81,7 +82,7 @@ export function PillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        style={{ minWidth: `calc(${widthCh}ch + 2.5rem)` }}
+        style={minWidthCh > 0 ? { minWidth: `calc(${minWidthCh}ch + 2.5rem)` } : undefined}
         className={cn(
           "inline-flex items-center gap-1 rounded-full transition-opacity",
           fillHeight && "h-full",

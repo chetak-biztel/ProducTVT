@@ -14,6 +14,7 @@ export function MultiPillSelect({
   placeholder = "Select…",
   disabled = false,
   fillHeight = false,
+  minWidthCh = 0,
 }: {
   values: string[];
   options: PillOption[];
@@ -22,6 +23,8 @@ export function MultiPillSelect({
   disabled?: boolean;
   /** Stretches pills to fill a fixed-height parent (e.g. a toolbar row), instead of their natural compact size. */
   fillHeight?: boolean;
+  /** Reserves this many characters of width, so every pill in a table column matches the widest value actually selected in it. */
+  minWidthCh?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -29,8 +32,6 @@ export function MultiPillSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const selected = options.filter((o) => values.includes(o.id));
-  // Reserve at least as much room as the widest option, so this lines up with other pill columns.
-  const widthCh = Math.max(placeholder.length, ...options.map((o) => o.name.length));
 
   useEffect(() => {
     if (!open) return;
@@ -73,7 +74,7 @@ export function MultiPillSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        style={{ minWidth: `calc(${widthCh}ch + 2.5rem)` }}
+        style={minWidthCh > 0 ? { minWidth: `calc(${minWidthCh}ch + 2.5rem)` } : undefined}
         className={cn(
           "inline-flex flex-wrap items-center gap-1 rounded-md px-1 py-0.5 transition-opacity hover:opacity-80 disabled:cursor-default disabled:hover:opacity-100",
           fillHeight && "h-full",

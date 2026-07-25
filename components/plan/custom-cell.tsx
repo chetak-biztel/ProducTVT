@@ -12,11 +12,13 @@ export function CustomCell({
   column,
   value,
   editable,
+  minWidthCh,
 }: {
   planItemId: string;
   column: PlanColumnDTO;
   value: PlanItemValueDTO | undefined;
   editable: boolean;
+  minWidthCh?: number;
 }) {
   if (column.type === "TEXT") {
     return (
@@ -61,6 +63,7 @@ export function CustomCell({
         onChange={(id) => setPlanItemOptionValue({ planItemId, columnId: column.id, optionIds: id ? [id] : [] })}
         disabled={!editable}
         placeholder="Set…"
+        minWidthCh={minWidthCh}
       />
     );
   }
@@ -73,6 +76,7 @@ export function CustomCell({
       onChange={(ids) => setPlanItemOptionValue({ planItemId, columnId: column.id, optionIds: ids })}
       disabled={!editable}
       placeholder="Select…"
+      minWidthCh={minWidthCh}
     />
   );
 }
