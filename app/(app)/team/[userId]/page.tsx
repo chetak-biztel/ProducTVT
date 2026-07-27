@@ -56,7 +56,7 @@ export default async function TeamMemberPlanPage({
         }
         subtitle={`${roleLabel(member.role)} · weekly plan & remarks`}
       >
-        <WeekSwitcher weekStartIso={weekStart.toISOString()} basePath={`/team/${member.id}`} />
+        <WeekSwitcher weekStartIso={weekStart.toISOString()} basePath={`/team/${member.id}`} ownerId={member.id} />
       </PageHeader>
 
       <PlanView

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser, isManagerOrAbove, canManageBoardFor } from "@/lib/rbac";
-import { parseWeekKey, weekKey } from "@/lib/week";
+import { addWeeks, parseWeekKey, weekKey } from "@/lib/week";
 import { syncTaskDone } from "@/lib/data/task-links";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
@@ -176,4 +176,65 @@ export async function reorderPlanItems(ownerId: string, orderedIds: string[]) {
     orderedIds.map((id, index) => prisma.planItem.update({ where: { id }, data: { order: index } })),
   );
   revalidatePlan(ownerId, owned[0].weekStartDate);
+}
+
+/** Duplicates every task from the previous week onto `weekStartKey`, appended after any existing rows. */
+export async function copyPreviousWeekPlan(ownerId: string, weekStartKey: string) {
+  const user = await requireUser();
+  if (!canEditPlanFor(user.id, user.role, ownerId)) throw new Error("Not authorized");
+
+  const weekStartDate = parseWeekKey(weekStartKey);
+  const prevWeekStart = addWeeks(weekStartDate, -1);
+
+  const [prevItems, last] = await Promise.all([
+    prisma.planItem.findMany({
+      where: { ownerId, weekStartDate: prevWeekStart },
+      include: { values: { include: { options: true } } },
+      orderBy: { order: "asc" },
+    }),
+    prisma.planItem.findFirst({
+      where: { ownerId, weekStartDate: weekStartDate },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    }),
+  ]);
+  if (prevItems.length === 0) throw new Error("Last week has no tasks to copy.");
+
+  let order = (last?.order ?? -1) + 1;
+
+  await prisma.$transaction(async (tx) => {
+    for (const item of prevItems) {
+      const newItem = await tx.planItem.create({
+        data: {
+          ownerId,
+          weekStartDate,
+          title: item.title,
+          categoryId: item.categoryId,
+          subTag: item.subTag,
+          statusId: item.statusId,
+          order: order++,
+        },
+      });
+
+      for (const value of item.values) {
+        const newValue = await tx.planItemValue.create({
+          data: {
+            planItemId: newItem.id,
+            columnId: value.columnId,
+            textValue: value.textValue,
+            dateValue: value.dateValue,
+            numberValue: value.numberValue,
+          },
+        });
+        if (value.options.length) {
+          await tx.planItemValueOption.createMany({
+            data: value.options.map((o) => ({ valueId: newValue.id, optionId: o.optionId })),
+          });
+        }
+      }
+    }
+  });
+
+  revalidatePlan(ownerId, weekStartDate);
+  return prevItems.length;
 }
