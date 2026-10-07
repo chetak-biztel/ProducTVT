@@ -34,7 +34,7 @@ export default async function TeamPage() {
               <Link
                 key={member.id}
                 href={`/team/${member.id}?week=${weekKey(weekStart)}`}
-                className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_4%,white)]"
+                className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_4%,var(--tint))]"
               >
                 <Avatar name={member.name} size={38} />
                 <div className="min-w-0 flex-1">

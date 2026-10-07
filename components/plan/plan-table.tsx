@@ -85,7 +85,7 @@ function PlanRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "border-b border-[var(--border)] last:border-0 hover:bg-[color-mix(in_srgb,var(--accent)_4%,white)] group",
+        "border-b border-[var(--border)] last:border-0 hover:bg-[color-mix(in_srgb,var(--accent)_4%,var(--tint))] group",
         isDragging && "relative z-10 bg-[var(--surface)] opacity-70",
       )}
     >

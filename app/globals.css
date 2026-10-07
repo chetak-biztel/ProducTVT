@@ -23,6 +23,62 @@
   --shadow-sm: 0 1px 2px rgba(20, 30, 60, 0.05);
   --shadow: 0 8px 24px -12px rgba(20, 30, 60, 0.18);
   --shadow-lg: 0 20px 48px -20px rgba(20, 30, 60, 0.28);
+
+  /* Base that tints are mixed into (white in light mode), and the dark "ink" text mixes toward. */
+  --tint: #ffffff;
+  --ink: var(--ink);
+  --overlay: rgba(15, 23, 42, 0.3);
+
+  color-scheme: light;
+}
+
+/* ===== Dark theme =====
+   Explicit choice via data-theme on <html> (cookie-driven); otherwise follow the OS. */
+:root[data-theme="dark"] {
+  --bg: #0d1220;
+  --bg-2: #0a0f1a;
+  --surface: #151c2c;
+  --surface-glass: rgba(21, 28, 44, 0.72);
+  --border: #252e42;
+  --border-strong: #334058;
+
+  --text: #e6eaf2;
+  --text-muted: #9aa5bd;
+  --text-faint: #6b768f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 20px 48px -20px rgba(0, 0, 0, 0.7);
+
+  --tint: #151c2c;
+  --ink: #f1f5f9;
+  --overlay: rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1220;
+    --bg-2: #0a0f1a;
+    --surface: #151c2c;
+    --surface-glass: rgba(21, 28, 44, 0.72);
+    --border: #252e42;
+    --border-strong: #334058;
+
+    --text: #e6eaf2;
+    --text-muted: #9aa5bd;
+    --text-faint: #6b768f;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.6);
+    --shadow-lg: 0 20px 48px -20px rgba(0, 0, 0, 0.7);
+
+    --tint: #151c2c;
+    --ink: #f1f5f9;
+    --overlay: rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+  }
 }
 
 @theme inline {
@@ -61,7 +117,7 @@ body {
   background: var(--surface-glass);
   backdrop-filter: saturate(180%) blur(16px);
   -webkit-backdrop-filter: saturate(180%) blur(16px);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, white);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--tint));
 }
 
 .card {
@@ -82,8 +138,8 @@ body {
 
 /* ===== Accent helpers ===== */
 .accent-soft {
-  background: color-mix(in srgb, var(--accent) 10%, white);
-  color: color-mix(in srgb, var(--accent) 72%, #101828);
+  background: color-mix(in srgb, var(--accent) 10%, var(--tint));
+  color: color-mix(in srgb, var(--accent) 72%, var(--ink));
 }
 
 .btn {
@@ -118,7 +174,7 @@ body {
   color: var(--text-muted);
 }
 .btn-ghost:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 8%, white);
+  background: color-mix(in srgb, var(--accent) 8%, var(--tint));
   color: var(--text);
 }
 .btn-outline {
@@ -135,7 +191,7 @@ body {
   color: #e11d48;
 }
 .btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, #e11d48 10%, white);
+  background: color-mix(in srgb, #e11d48 10%, var(--tint));
 }
 .btn-sm {
   padding: 0.35rem 0.6rem;
@@ -179,9 +235,9 @@ body {
   line-height: 1;
   padding: 0.3rem 0.55rem;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--pc, var(--accent)) 14%, white);
-  color: color-mix(in srgb, var(--pc, var(--accent)) 68%, #0b1220);
-  border: 1px solid color-mix(in srgb, var(--pc, var(--accent)) 26%, white);
+  background: color-mix(in srgb, var(--pc, var(--accent)) 14%, var(--tint));
+  color: color-mix(in srgb, var(--pc, var(--accent)) 68%, var(--ink));
+  border: 1px solid color-mix(in srgb, var(--pc, var(--accent)) 26%, var(--tint));
   white-space: nowrap;
 }
 .pill-dot {
@@ -190,6 +246,40 @@ body {
   border-radius: 999px;
   background: var(--pc, var(--accent));
   flex: none;
+}
+
+.alert {
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--ac) 22%, var(--tint));
+  background: color-mix(in srgb, var(--ac) 10%, var(--tint));
+  color: color-mix(in srgb, var(--ac) 80%, var(--ink));
+}
+.alert-error {
+  --ac: #e11d48;
+}
+.alert-success {
+  --ac: #059669;
+}
+
+/* Theme toggle: show the icon for the theme you'd switch to */
+.theme-toggle .icon-sun {
+  display: none;
+}
+:root[data-theme="dark"] .theme-toggle .icon-sun {
+  display: block;
+}
+:root[data-theme="dark"] .theme-toggle .icon-moon {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun {
+    display: block;
+  }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon {
+    display: none;
+  }
 }
 
 .field-label {

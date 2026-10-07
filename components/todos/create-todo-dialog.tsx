@@ -61,7 +61,7 @@ export function CreateTodoDialog({
           {allUsers.map((u) => (
             <label
               key={u.id}
-              className="flex items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-2 py-1 text-xs has-[:checked]:border-[var(--accent)] has-[:checked]:bg-[color-mix(in_srgb,var(--accent)_10%,white)]"
+              className="flex items-center gap-1.5 rounded-full border border-[var(--border-strong)] px-2 py-1 text-xs has-[:checked]:border-[var(--accent)] has-[:checked]:bg-[color-mix(in_srgb,var(--accent)_10%,var(--tint))]"
             >
               <input type="checkbox" name="people" value={u.id} className="sr-only" />
               <Avatar name={u.name} size={18} />

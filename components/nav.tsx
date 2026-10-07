@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { signOutAction } from "@/lib/actions/session";
 import { cn } from "@/lib/utils";
 
@@ -71,8 +72,8 @@ export function Nav({ user }: { user: NavUser }) {
             className={cn(
               "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
               active
-                ? "bg-[color-mix(in_srgb,var(--accent)_12%,white)] text-[var(--accent)]"
-                : "text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--accent)_7%,white)] hover:text-[var(--text)]",
+                ? "bg-[color-mix(in_srgb,var(--accent)_12%,var(--tint))] text-[var(--accent)]"
+                : "text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--accent)_7%,var(--tint))] hover:text-[var(--text)]",
             )}
           >
             <Icon size={18} className="shrink-0" />
@@ -98,6 +99,7 @@ export function Nav({ user }: { user: NavUser }) {
           <p className="truncate text-sm font-medium text-[var(--text)]">{user.name}</p>
           <p className="truncate text-xs text-[var(--text-faint)]">{roleLabel(user.role)}</p>
         </div>
+        <ThemeToggle />
         <form action={signOutAction}>
           <button type="submit" className="btn btn-ghost btn-icon" title="Sign out">
             <LogOut size={17} />
@@ -120,7 +122,7 @@ export function Nav({ user }: { user: NavUser }) {
       {/* Mobile drawer */}
       {open && (
         <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[2px]" onClick={() => setOpen(false)} />
+          <div className="absolute inset-0 bg-[var(--overlay)] backdrop-blur-[2px]" onClick={() => setOpen(false)} />
           <aside className="glass animate-in absolute left-0 top-0 flex h-full w-72 flex-col gap-4 p-4">
             <div className="flex items-center justify-between">
               {Brand}

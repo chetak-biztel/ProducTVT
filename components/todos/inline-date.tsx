@@ -32,7 +32,7 @@ export function InlineDate({
         "relative flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
         value
           ? overdue
-            ? "border-rose-200 bg-rose-50 text-rose-600"
+            ? "border-[color-mix(in_srgb,#e11d48_30%,var(--tint))] bg-[color-mix(in_srgb,#e11d48_10%,var(--tint))] text-rose-600"
             : "border-[var(--border-strong)] text-[var(--text-muted)]"
           : "border-dashed border-[var(--border-strong)] text-[var(--text-faint)]",
         !disabled && "hover:border-[var(--accent)]",

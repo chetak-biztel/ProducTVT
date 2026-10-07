@@ -76,7 +76,7 @@ export function FormDialog({
         createPortal(
           <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8">
             <div
-              className="fixed inset-0 bg-slate-900/30 backdrop-blur-[2px] animate-in"
+              className="fixed inset-0 bg-[var(--overlay)] backdrop-blur-[2px] animate-in"
               onClick={() => setOpen(false)}
             />
             <div
@@ -117,7 +117,7 @@ export function FormDialog({
                 <div className="space-y-4">{children}</div>
 
                 {state?.error && (
-                  <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+                  <p className="alert alert-error">
                     {state.error}
                   </p>
                 )}

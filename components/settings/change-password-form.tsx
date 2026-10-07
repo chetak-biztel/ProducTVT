@@ -19,10 +19,10 @@ export function ChangePasswordForm() {
       </Field>
 
       {state?.error && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">{state.error}</p>
+        <p className="alert alert-error">{state.error}</p>
       )}
       {state?.ok && (
-        <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+        <p className="alert alert-success">
           Password updated.
         </p>
       )}

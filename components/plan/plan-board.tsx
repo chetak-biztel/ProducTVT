@@ -93,7 +93,7 @@ function Column({ status, items, editable }: { status: PlanStatusOpt; items: Pla
         ref={setNodeRef}
         className={cn(
           "flex min-h-[120px] flex-col gap-2.5 rounded-2xl border border-transparent p-1.5 transition-colors",
-          isOver && "border-dashed border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_6%,white)]",
+          isOver && "border-dashed border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_6%,var(--tint))]",
         )}
       >
         {items.map((item) => (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { getEffectiveAccentColor, readableForeground } from "@/lib/theme";
 
@@ -14,11 +15,15 @@ export default async function RootLayout({
 }>) {
   const accent = await getEffectiveAccentColor();
   const accentFg = readableForeground(accent);
+  // Explicit light/dark choice from the theme toggle; absent means follow the OS setting.
+  const themeCookie = (await cookies()).get("theme")?.value;
+  const theme = themeCookie === "light" || themeCookie === "dark" ? themeCookie : undefined;
 
   return (
     <html
       lang="en"
       className="h-full antialiased"
+      data-theme={theme}
       style={{ ["--accent" as string]: accent, ["--accent-fg" as string]: accentFg }}
     >
       <body className="min-h-full flex flex-col">{children}</body>

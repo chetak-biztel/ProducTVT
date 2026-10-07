@@ -32,7 +32,7 @@ export function LoginForm() {
       </Field>
 
       {state?.error && (
-        <p className="text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">{state.error}</p>
+        <p className="alert alert-error">{state.error}</p>
       )}
 
       <button type="submit" className="btn btn-accent w-full" disabled={pending}>
