@@ -6,15 +6,24 @@ import { createTodoAction } from "@/app/(app)/todos/actions";
 import { FormDialog } from "@/components/ui/form-dialog";
 import { Field } from "@/components/ui/field";
 import { Avatar } from "@/components/ui/avatar";
+import { useFeedback } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 
 export function CreateTodoDialog({
   projects,
   allUsers,
+  trigger,
+  open,
+  onOpenChange,
 }: {
   projects: { id: string; name: string }[];
   allUsers: { id: string; name: string }[];
+  /** `null` renders no button — for the app-wide shortcut / phone + button that open it themselves. */
+  trigger?: null;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
+  const { toast } = useFeedback();
   return (
     <FormDialog
       title="New todo"
@@ -22,6 +31,10 @@ export function CreateTodoDialog({
       submitText="Add todo"
       triggerLabel="New todo"
       triggerIcon={<Plus size={15} />}
+      trigger={trigger}
+      open={open}
+      onOpenChange={onOpenChange}
+      onSuccess={() => toast({ message: "Todo added", tone: "success" })}
     >
       <CreateTodoFields projects={projects} allUsers={allUsers} />
     </FormDialog>

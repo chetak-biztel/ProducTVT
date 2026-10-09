@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import { getEffectiveAccentColor, readableForeground } from "@/lib/theme";
@@ -6,6 +6,17 @@ import { getEffectiveAccentColor, readableForeground } from "@/lib/theme";
 export const metadata: Metadata = {
   title: "ProducTVT — Team Plans & Projects",
   description: "Weekly action plans, todos, and project management for the team.",
+  applicationName: "ProducTVT",
+  appleWebApp: { capable: true, title: "ProducTVT", statusBarStyle: "default" },
+};
+
+export const viewport: Viewport = {
+  // Lets the app draw under the iPhone notch / home bar; layouts pad with env(safe-area-inset-*).
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f5f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0d1220" },
+  ],
 };
 
 export default async function RootLayout({

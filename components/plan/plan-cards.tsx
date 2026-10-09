@@ -5,6 +5,7 @@ import { updatePlanItemField, deletePlanItem } from "@/app/(app)/plan/actions";
 import { PillSelect } from "@/components/plan/pill-select";
 import { InlineText } from "@/components/plan/inline-text";
 import { CustomCell } from "@/components/plan/custom-cell";
+import { useFeedback } from "@/components/ui/feedback";
 import type { PlanCategory, PlanColumnDTO, PlanItemDTO, PlanStatusOpt } from "@/components/plan/types";
 
 /** Phone layout for the weekly plan: one card per task instead of a wide table row.
@@ -68,6 +69,9 @@ function PlanCard({
     await updatePlanItemField({ id: item.id, field, value });
   }
 
+  const { deleteWithUndo, pendingDeletes } = useFeedback();
+  if (pendingDeletes.has(item.id)) return null;
+
   const has = (field: string) => visibleColumns.some((c) => c.systemField === field);
   const customColumns = visibleColumns.filter((c) => !c.systemField);
 
@@ -85,7 +89,7 @@ function PlanCard({
         {editable && (
           <button
             type="button"
-            onClick={() => deletePlanItem(item.id)}
+            onClick={() => deleteWithUndo(item.id, "Task deleted", () => deletePlanItem(item.id))}
             className="btn btn-ghost btn-icon btn-sm -mr-1 -mt-1 shrink-0 text-[var(--text-faint)] hover:!text-rose-600"
             aria-label="Delete task"
           >

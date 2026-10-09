@@ -17,6 +17,7 @@ import { updatePlanItemField, deletePlanItem } from "@/app/(app)/plan/actions";
 import { Pill } from "@/components/ui/pill";
 import { InlineText } from "@/components/plan/inline-text";
 import { cn } from "@/lib/utils";
+import { useFeedback } from "@/components/ui/feedback";
 import type { PlanCategory, PlanItemDTO, PlanStatusOpt } from "@/components/plan/types";
 
 function Card({ item, editable }: { item: PlanItemDTO; editable: boolean }) {
@@ -25,9 +26,13 @@ function Card({ item, editable }: { item: PlanItemDTO; editable: boolean }) {
     disabled: !editable,
   });
 
+  const { deleteWithUndo, pendingDeletes } = useFeedback();
+
   async function save(field: "title" | "review", value: string) {
     await updatePlanItemField({ id: item.id, field, value });
   }
+
+  if (pendingDeletes.has(item.id)) return null;
 
   return (
     <div
@@ -47,7 +52,7 @@ function Card({ item, editable }: { item: PlanItemDTO; editable: boolean }) {
           {editable && (
             <button
               type="button"
-              onClick={() => deletePlanItem(item.id)}
+              onClick={() => deleteWithUndo(item.id, "Task deleted", () => deletePlanItem(item.id))}
               className="btn btn-ghost btn-icon !p-1 text-[var(--text-faint)] hover:!text-rose-600"
               aria-label="Delete"
             >

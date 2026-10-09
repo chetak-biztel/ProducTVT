@@ -9,6 +9,13 @@ export async function getUpcomingTodos(ownerId: string, limit = 5) {
   });
 }
 
+/** Open todos whose due date is before today — drives the red badge on Todos. */
+export async function getOverdueTodoCount(ownerId: string) {
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  return prisma.todo.count({ where: { ownerId, done: false, dueDate: { lt: today } } });
+}
+
 export async function getOpenTodoCount(ownerId: string) {
   return prisma.todo.count({ where: { ownerId, done: false } });
 }

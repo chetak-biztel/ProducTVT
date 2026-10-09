@@ -315,6 +315,11 @@ body {
   border-radius: 999px;
 }
 
+.skeleton {
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

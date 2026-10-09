@@ -16,6 +16,7 @@ import {
 import { createNote, updateNote, deleteNote } from "@/app/(app)/notes/actions";
 import { EmptyState } from "@/components/page-header";
 import { cn } from "@/lib/utils";
+import { useFeedback } from "@/components/ui/feedback";
 import type { NoteDTO } from "./types";
 
 type SaveState = "dirty" | "saving" | "saved" | "error";
@@ -74,6 +75,7 @@ function countWords(text: string) {
 
 export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
   const [notes, setNotes] = useState<NoteDTO[]>(initialNotes);
+  const { confirm } = useFeedback();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<Record<string, SaveState>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -174,7 +176,11 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
   async function handleClose(id: string) {
     const note = notes.find((n) => n.id === id);
     if (!note) return;
-    if (note.content.trim() && !window.confirm(`Delete "${note.title}"? This can't be undone.`)) return;
+    if (
+      note.content.trim() &&
+      !(await confirm(`Delete "${note.title}"? This can't be undone.`, { confirmText: "Delete", danger: true }))
+    )
+      return;
 
     const t = timers.current.get(id);
     if (t) clearTimeout(t);

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, CalendarDays, CopyPlus, Loader2 } from "lucide-react";
 import { addWeeks, currentWeekStart, formatWeekRange, weekKey } from "@/lib/week";
 import { copyPreviousWeekPlan } from "@/app/(app)/plan/actions";
+import { useFeedback } from "@/components/ui/feedback";
 
 export function WeekSwitcher({
   weekStartIso,
@@ -17,6 +18,7 @@ export function WeekSwitcher({
 }) {
   const router = useRouter();
   const [copying, startCopy] = useTransition();
+  const { confirm, toast } = useFeedback();
   const weekStart = new Date(weekStartIso);
   const isCurrent = weekKey(weekStart) === weekKey(currentWeekStart());
 
@@ -24,14 +26,15 @@ export function WeekSwitcher({
     router.push(`${basePath}?week=${weekKey(next)}`);
   }
 
-  function copyLastWeek() {
+  async function copyLastWeek() {
     if (!ownerId) return;
-    if (!window.confirm("Copy every task from last week into this week?")) return;
+    if (!(await confirm("Copy every task from last week into this week?", { confirmText: "Copy tasks" }))) return;
     startCopy(async () => {
       try {
         await copyPreviousWeekPlan(ownerId, weekKey(weekStart));
+        toast({ message: "Last week's tasks copied", tone: "success" });
       } catch (err) {
-        window.alert(err instanceof Error ? err.message : "Couldn't copy last week's tasks.");
+        toast({ message: err instanceof Error ? err.message : "Couldn't copy last week's tasks.", tone: "error" });
       }
     });
   }

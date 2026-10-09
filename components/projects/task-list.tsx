@@ -5,6 +5,7 @@ import { Plus, Trash2, UserCircle2 } from "lucide-react";
 import { createTaskAction, deleteTask, setTaskAssignee, setTaskStatus } from "@/app/(app)/projects/actions";
 import { PillSelect } from "@/components/plan/pill-select";
 import { TASK_STATUS_OPTIONS } from "@/components/projects/status-badge";
+import { useFeedback } from "@/components/ui/feedback";
 import type { ProjectTaskDTO } from "@/components/projects/types";
 
 export function TaskList({
@@ -20,6 +21,7 @@ export function TaskList({
 }) {
   const [title, setTitle] = useState("");
   const [pending, startTransition] = useTransition();
+  const { deleteWithUndo, pendingDeletes } = useFeedback();
   const assigneeOptions = members.map((m) => ({ id: m.id, name: m.name, color: "#2563eb" }));
 
   function addTask() {
@@ -37,7 +39,7 @@ export function TaskList({
 
   return (
     <div className="space-y-2">
-      {tasks.map((task) => (
+      {tasks.filter((task) => !pendingDeletes.has(task.id)).map((task) => (
         <div key={task.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 sm:flex-nowrap sm:gap-2.5">
           <PillSelect
             value={task.status}
@@ -64,7 +66,7 @@ export function TaskList({
           )}
           <button
             type="button"
-            onClick={() => deleteTask(task.id, projectId)}
+            onClick={() => deleteWithUndo(task.id, "Task deleted", () => deleteTask(task.id, projectId))}
             className="btn btn-ghost btn-icon btn-sm ml-auto text-[var(--text-faint)] hover:!text-rose-600 sm:ml-0"
             aria-label="Delete task"
           >

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import { startTransition, useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Loader2 } from "lucide-react";
 import type { ActionState } from "@/lib/actions/types";
@@ -19,6 +19,9 @@ export function FormDialog({
   trigger,
   children,
   wide = false,
+  open: openProp,
+  onOpenChange,
+  onSuccess,
 }: {
   title: string;
   description?: string;
@@ -28,11 +31,23 @@ export function FormDialog({
   triggerIcon?: React.ReactNode;
   triggerClassName?: string;
   /** Custom trigger render; receives an `open` callback. */
-  trigger?: (open: () => void) => React.ReactNode;
+  trigger?: ((open: () => void) => React.ReactNode) | null;
   children: React.ReactNode;
   wide?: boolean;
+  /** Controlled mode — lets something other than the trigger (a shortcut, a FAB) open the dialog. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  onSuccess?: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (openProp === undefined) setInternalOpen(next);
+      onOpenChange?.(next);
+    },
+    [openProp, onOpenChange],
+  );
   // Portals need `document`, which doesn't exist during SSR; derived once at mount,
   // never changes afterward, so no effect is needed to set it.
   const [mounted] = useState(() => typeof document !== "undefined");
@@ -46,7 +61,10 @@ export function FormDialog({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpen(false);
       formRef.current?.reset();
+      onSuccess?.();
     }
+    // Only a new action result should close the dialog, not a change of callbacks.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state]);
 
   useEffect(() => {
@@ -58,11 +76,11 @@ export function FormDialog({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   return (
     <>
-      {trigger ? (
+      {trigger === null ? null : trigger ? (
         trigger(() => setOpen(true))
       ) : (
         <button type="button" className={triggerClassName} onClick={() => setOpen(true)}>

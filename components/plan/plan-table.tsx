@@ -18,6 +18,7 @@ import { PillSelect } from "@/components/plan/pill-select";
 import { InlineText } from "@/components/plan/inline-text";
 import { CustomCell } from "@/components/plan/custom-cell";
 import { cn } from "@/lib/utils";
+import { useFeedback } from "@/components/ui/feedback";
 import type { PlanCategory, PlanColumnDTO, PlanItemDTO, PlanStatusOpt } from "@/components/plan/types";
 
 const MIN_COL_WIDTH = 48;
@@ -75,10 +76,13 @@ function PlanRow({
     disabled: !editable,
   });
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const { deleteWithUndo, pendingDeletes } = useFeedback();
 
   async function save(field: "title" | "categoryId" | "subTag" | "statusId" | "review", value: string) {
     await updatePlanItemField({ id: item.id, field, value });
   }
+
+  if (pendingDeletes.has(item.id)) return null;
 
   return (
     <tr
@@ -165,7 +169,7 @@ function PlanRow({
         <td className="px-2 py-2 align-top text-right">
           <button
             type="button"
-            onClick={() => deletePlanItem(item.id)}
+            onClick={() => deleteWithUndo(item.id, "Task deleted", () => deletePlanItem(item.id))}
             className="btn btn-ghost btn-icon btn-sm text-[var(--text-faint)] opacity-0 transition-opacity hover:!text-rose-600 group-hover:opacity-100 touch-visible"
             aria-label="Delete task"
           >
