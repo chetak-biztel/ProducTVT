@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { Nav } from "@/components/nav";
 import { AppShell } from "@/components/app-shell";
+import { InstallBanner } from "@/components/install-app";
 import { FeedbackProvider } from "@/components/ui/feedback";
 import { requireUser } from "@/lib/rbac";
 import { getMyProjects } from "@/lib/data/todos";
@@ -29,7 +30,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           />
           <main className="flex-1 min-w-0">
             {/* Bottom padding on phones clears the tab bar and the + button. */}
-            <div className="w-full px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:py-8">{children}</div>
+            <div className="w-full px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:py-8">
+              <InstallBanner />
+              {children}
+            </div>
           </main>
         </div>
       </AppShell>
