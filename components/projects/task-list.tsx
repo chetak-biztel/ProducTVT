@@ -38,14 +38,16 @@ export function TaskList({
   return (
     <div className="space-y-2">
       {tasks.map((task) => (
-        <div key={task.id} className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] px-3 py-2">
+        <div key={task.id} className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] px-3 py-2 sm:flex-nowrap sm:gap-2.5">
           <PillSelect
             value={task.status}
             options={TASK_STATUS_OPTIONS}
             allowClear={false}
             onChange={(v) => setTaskStatus(task.id, projectId, v)}
           />
-          <span className="flex-1 truncate text-sm text-[var(--text)]">{task.title}</span>
+          <span className="order-first basis-full break-words text-sm text-[var(--text)] sm:order-none sm:basis-auto sm:flex-1 sm:truncate">
+            {task.title}
+          </span>
           {assigneeOptions.length > 0 ? (
             <PillSelect
               value={task.assignee?.id}
@@ -63,7 +65,7 @@ export function TaskList({
           <button
             type="button"
             onClick={() => deleteTask(task.id, projectId)}
-            className="btn btn-ghost btn-icon btn-sm text-[var(--text-faint)] hover:!text-rose-600"
+            className="btn btn-ghost btn-icon btn-sm ml-auto text-[var(--text-faint)] hover:!text-rose-600 sm:ml-0"
             aria-label="Delete task"
           >
             <Trash2 size={13} />

@@ -46,15 +46,15 @@ export default async function DashboardPage() {
   const openPlanItems = planItems.filter((i) => i.status?.name !== "Done").slice(0, 5);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[var(--text)]">
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl text-[var(--text)]">
           {greeting()}, {user.name.split(" ")[0]}
         </h1>
         <p className="mt-1 text-sm text-[var(--text-muted)]">{formatWeekRange(weekStart)} · here&apos;s where things stand.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard
           icon={CalendarRange}
           label="Tasks done this week"

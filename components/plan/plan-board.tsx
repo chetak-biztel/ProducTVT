@@ -43,7 +43,7 @@ function Card({ item, editable }: { item: PlanItemDTO; editable: boolean }) {
           {item.category && <Pill color={item.category.color}>{item.category.name}</Pill>}
           {item.subTag && <span className="text-xs text-[var(--text-faint)]">#{item.subTag}</span>}
         </div>
-        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="touch-visible flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           {editable && (
             <button
               type="button"
@@ -83,7 +83,7 @@ function Card({ item, editable }: { item: PlanItemDTO; editable: boolean }) {
 function Column({ status, items, editable }: { status: PlanStatusOpt; items: PlanItemDTO[]; editable: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: status.id });
   return (
-    <div className="flex w-72 shrink-0 flex-col gap-2.5">
+    <div className="flex w-[min(18rem,82vw)] shrink-0 snap-start flex-col gap-2.5">
       <div className="flex items-center gap-2 px-1">
         <span className="h-2 w-2 rounded-full" style={{ background: status.color }} />
         <h3 className="text-sm font-semibold text-[var(--text)]">{status.name}</h3>
@@ -151,7 +151,7 @@ export function PlanBoard({
 
   return (
     <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-      <div className="flex gap-4 overflow-x-auto scroll-thin pb-2">
+      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-thin pb-2 md:snap-none">
         {statuses.map((status) => (
           <Column
             key={status.id}

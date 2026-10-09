@@ -15,7 +15,7 @@ type ColValue = string | string[];
     remaining space — otherwise it sizes to its content and traps any
     flex-1 on the child inside, since this slot is the real flex item. */
 function FieldSlot({ children, grow = false }: { children: React.ReactNode; grow?: boolean }) {
-  return <span className={cn("inline-flex h-8 items-center", grow ? "min-w-[140px] flex-1" : "shrink-0")}>{children}</span>;
+  return <span className={cn("inline-flex h-8 items-center", grow ? "min-w-[140px] flex-1 basis-full md:basis-auto" : "shrink-0")}>{children}</span>;
 }
 
 function CustomColumnField({
@@ -154,7 +154,7 @@ export function AddItemRow({
 
   return (
     <div className="w-full overflow-x-auto scroll-thin rounded-xl border border-dashed border-[var(--border-strong)]">
-      <div className="flex w-full items-center gap-2 px-3 py-2.5">
+      <div className="flex w-full flex-wrap items-center gap-2 px-3 py-2.5 md:flex-nowrap">
         {visibleColumns.map((c) => {
           if (c.systemField === "TITLE") {
             return (

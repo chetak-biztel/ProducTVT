@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Table2, LayoutGrid, Columns3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlanTable } from "@/components/plan/plan-table";
+import { PlanCards } from "@/components/plan/plan-cards";
 import { PlanBoard } from "@/components/plan/plan-board";
 import { AddItemRow } from "@/components/plan/add-item-row";
 import type { PlanCategory, PlanColumnDTO, PlanItemDTO, PlanStatusOpt } from "@/components/plan/types";
@@ -47,7 +48,8 @@ export function PlanView({
               view === "table" ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "text-[var(--text-muted)] hover:text-[var(--text)]",
             )}
           >
-            <Table2 size={14} /> Table
+            <Table2 size={14} /> <span className="md:hidden">List</span>
+            <span className="hidden md:inline">Table</span>
           </button>
           <button
             onClick={() => setView("board")}
@@ -67,14 +69,29 @@ export function PlanView({
       </div>
 
       {view === "table" ? (
-        <PlanTable
-          items={items}
-          categories={categories}
-          statuses={statuses}
-          columns={columns}
-          editable={editable}
-          showReview={showReview}
-        />
+        <>
+          {/* A wide spreadsheet doesn't work on a phone — show the same rows as cards there. */}
+          <div className="hidden md:block">
+            <PlanTable
+              items={items}
+              categories={categories}
+              statuses={statuses}
+              columns={columns}
+              editable={editable}
+              showReview={showReview}
+            />
+          </div>
+          <div className="md:hidden">
+            <PlanCards
+              items={items}
+              categories={categories}
+              statuses={statuses}
+              columns={columns}
+              editable={editable}
+              showReview={showReview}
+            />
+          </div>
+        </>
       ) : (
         <PlanBoard key={itemsKey} items={items} categories={categories} statuses={statuses} editable={editable} />
       )}

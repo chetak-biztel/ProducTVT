@@ -94,7 +94,7 @@ function PlanRow({
           <span
             {...attributes}
             {...listeners}
-            className="flex cursor-grab touch-none rounded p-0.5 text-[var(--text-faint)] opacity-0 hover:bg-[var(--bg)] hover:text-[var(--text)] group-hover:opacity-100"
+            className="flex cursor-grab touch-none rounded p-0.5 text-[var(--text-faint)] opacity-0 hover:bg-[var(--bg)] hover:text-[var(--text)] group-hover:opacity-100 touch-visible"
             aria-label="Drag to reorder"
           >
             <GripVertical size={14} />
@@ -143,6 +143,7 @@ function PlanRow({
               column={c}
               value={item.values.find((v) => v.columnId === c.id)}
               editable={editable}
+              done={item.status?.name === "Done"}
               fillWidth
             />
           )}
@@ -165,7 +166,7 @@ function PlanRow({
           <button
             type="button"
             onClick={() => deletePlanItem(item.id)}
-            className="btn btn-ghost btn-icon btn-sm text-[var(--text-faint)] opacity-0 transition-opacity hover:!text-rose-600 group-hover:opacity-100"
+            className="btn btn-ghost btn-icon btn-sm text-[var(--text-faint)] opacity-0 transition-opacity hover:!text-rose-600 group-hover:opacity-100 touch-visible"
             aria-label="Delete task"
           >
             <Trash2 size={14} />

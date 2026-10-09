@@ -37,12 +37,12 @@ export function WeekSwitcher({
   }
 
   return (
-    <div className="glass inline-flex items-center gap-1 rounded-xl p-1">
+    <div className="glass flex w-full items-center gap-1 rounded-xl p-1 sm:inline-flex sm:w-auto">
       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => go(addWeeks(weekStart, -1))} aria-label="Previous week">
         <ChevronLeft size={16} />
       </button>
-      <div className="flex items-center gap-1.5 px-2 text-sm font-medium text-[var(--text)]">
-        <CalendarDays size={14} className="text-[var(--text-faint)]" />
+      <div className="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap px-1 text-sm font-medium text-[var(--text)] sm:flex-none sm:px-2">
+        <CalendarDays size={14} className="hidden text-[var(--text-faint)] sm:block" />
         {formatWeekRange(weekStart)}
       </div>
       <button className="btn btn-ghost btn-icon btn-sm" onClick={() => go(addWeeks(weekStart, 1))} aria-label="Next week">
@@ -54,9 +54,9 @@ export function WeekSwitcher({
         </button>
       )}
       {isCurrent && ownerId && (
-        <button className="btn btn-outline btn-sm ml-1" onClick={copyLastWeek} disabled={copying}>
+        <button className="btn btn-outline btn-sm ml-1" onClick={copyLastWeek} disabled={copying} title="Copy last week">
           {copying ? <Loader2 size={14} className="animate-spin" /> : <CopyPlus size={14} />}
-          Copy last week
+          <span className="hidden sm:inline">Copy last week</span>
         </button>
       )}
     </div>

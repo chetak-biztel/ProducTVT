@@ -17,11 +17,11 @@ export default async function AdminUsersPage() {
       </div>
 
       <div className="card overflow-x-auto scroll-thin">
-        <table className="w-full min-w-[640px] border-collapse text-sm">
+        <table className="w-full min-w-[480px] sm:min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-[var(--border)] text-left text-xs uppercase tracking-wide text-[var(--text-faint)]">
               <th className="px-4 py-2.5 font-medium">Name</th>
-              <th className="px-4 py-2.5 font-medium">Username</th>
+              <th className="hidden px-4 py-2.5 font-medium sm:table-cell">Username</th>
               <th className="px-4 py-2.5 font-medium">Role</th>
               <th className="px-4 py-2.5 font-medium">Active</th>
               <th className="w-16 px-4 py-2.5" />
@@ -38,10 +38,11 @@ export default async function AdminUsersPage() {
                       <span className={u.active ? "text-[var(--text)]" : "text-[var(--text-faint)]"}>
                         {u.name}
                         {self && <span className="ml-1.5 text-xs text-[var(--text-faint)]">(you)</span>}
+                        <span className="block text-xs text-[var(--text-faint)] sm:hidden">{u.username}</span>
                       </span>
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-[var(--text-muted)]">{u.username}</td>
+                  <td className="hidden px-4 py-2.5 text-[var(--text-muted)] sm:table-cell">{u.username}</td>
                   <td className="px-4 py-2.5">
                     <RoleSelect userId={u.id} role={u.role} disabled={self} />
                   </td>
