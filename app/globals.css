@@ -117,7 +117,7 @@ body {
 @media (pointer: coarse) {
   input:not([type="checkbox"]):not([type="radio"]),
   select,
-  textarea {
+  textarea:not(.notepad-editor) {
     font-size: 16px !important;
   }
 }

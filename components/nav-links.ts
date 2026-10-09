@@ -43,5 +43,5 @@ export const TAB_BAR_LINKS = [
   { href: "/dashboard", label: "Home", icon: "dashboard" },
   { href: "/plan", label: "Plan", icon: "plan" },
   { href: "/todos", label: "Todos", icon: "todos" },
-  { href: "/projects", label: "Projects", icon: "projects" },
+  { href: "/notes", label: "Notes", icon: "notes" },
 ];

@@ -61,6 +61,18 @@ function useStored(key: string, fallback: string): [string, (v: string) => void]
   return [value, set];
 }
 
+// Phones: iOS zooms into any field under 16px, so the editor never goes below that on touch screens.
+const COARSE_QUERY = "(pointer: coarse)";
+function subscribeCoarse(cb: () => void) {
+  const mq = window.matchMedia(COARSE_QUERY);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+function useCoarsePointer() {
+  return useSyncExternalStore(subscribeCoarse, () => window.matchMedia(COARSE_QUERY).matches, () => false);
+}
+const TOUCH_FONT_MIN = 16;
+
 function cursorPosition(text: string, index: number) {
   const before = text.slice(0, index);
   const line = before.split("\n").length;
@@ -90,8 +102,10 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tabRefs = useRef(new Map<string, HTMLElement>());
 
+  const coarse = useCoarsePointer();
   const wrap = wrapPref !== "0";
-  const fontSize = Math.min(FONT_MAX, Math.max(FONT_MIN, Number(fontPref) || FONT_DEFAULT));
+  const fontMin = coarse ? TOUCH_FONT_MIN : FONT_MIN;
+  const fontSize = Math.min(FONT_MAX, Math.max(fontMin, Number(fontPref) || FONT_DEFAULT));
   const setFontSize = (fn: (s: number) => number) => setFontPref(String(fn(fontSize)));
 
   // Explicit selection first, then the tab open last visit, then the first tab.
@@ -265,7 +279,7 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
   }
 
   return (
-    <div className="card flex h-[calc(100dvh-12rem)] min-h-[420px] flex-col overflow-hidden">
+    <div className="card flex h-[calc(100dvh-15.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] min-h-[300px] flex-col overflow-hidden md:h-[calc(100dvh-12rem)] md:min-h-[420px]">
       {/* Tabs */}
       <div className="flex items-end gap-1 border-b bg-[color-mix(in_srgb,var(--accent)_4%,var(--tint))] px-2 pt-2">
         <div className="scroll-thin flex min-w-0 items-end gap-1 overflow-x-auto" role="tablist">
@@ -283,7 +297,10 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
                 aria-selected={isActive}
                 tabIndex={0}
                 title={`${n.title} — double-click to rename`}
-                onClick={() => setActiveId(n.id)}
+                onClick={() => {
+                  if (coarse && isActive) setEditingId(n.id);
+                  else setActiveId(n.id);
+                }}
                 onDoubleClick={() => setEditingId(n.id)}
                 onAuxClick={(e) => {
                   if (e.button === 1) handleClose(n.id);
@@ -294,7 +311,7 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
                   if (e.key === "F2") setEditingId(n.id);
                 }}
                 className={cn(
-                  "group relative flex h-9 w-44 shrink-0 cursor-pointer select-none items-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-colors",
+                  "group relative flex h-9 w-36 shrink-0 sm:w-44 cursor-pointer select-none items-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-colors",
                   isActive
                     ? "border-[var(--border)] bg-[var(--surface)] text-[var(--text)]"
                     : "border-transparent text-[var(--text-muted)] hover:bg-[color-mix(in_srgb,var(--accent)_8%,var(--tint))] hover:text-[var(--text)]",
@@ -353,11 +370,11 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
 
       {/* Toolbar */}
       <div className="flex items-center gap-1 border-b px-2 py-1">
-        <button className="btn btn-ghost btn-sm" onClick={handleNew} disabled={creating}>
+        <button className="btn btn-ghost btn-sm hidden sm:inline-flex" onClick={handleNew} disabled={creating}>
           <Plus size={14} /> New
         </button>
-        <button className="btn btn-ghost btn-sm" onClick={handleDownload} title="Download as .txt">
-          <Download size={14} /> Save as .txt
+        <button className="btn btn-ghost btn-sm" onClick={handleDownload} title="Download as .txt" aria-label="Download as .txt">
+          <Download size={14} /> <span className="hidden sm:inline">Save as .txt</span>
         </button>
         <span className="mx-1 h-4 w-px bg-[var(--border)]" />
         <button
@@ -366,12 +383,12 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
           aria-pressed={wrap}
           title="Word wrap"
         >
-          <TextWrap size={14} /> Word wrap
+          <TextWrap size={14} /> <span className="hidden sm:inline">Word wrap</span>
         </button>
         <button
           className="btn btn-ghost btn-icon"
-          onClick={() => setFontSize((s) => Math.max(FONT_MIN, s - 1))}
-          disabled={fontSize <= FONT_MIN}
+          onClick={() => setFontSize((s) => Math.max(fontMin, s - 1))}
+          disabled={fontSize <= fontMin}
           title="Zoom out"
           aria-label="Zoom out"
         >
@@ -405,7 +422,7 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
         spellCheck={false}
         placeholder="Start typing…"
         aria-label={active.title}
-        className="scroll-thin min-h-0 flex-1 resize-none bg-[var(--surface)] p-4 font-mono leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
+        className="notepad-editor scroll-thin min-h-0 flex-1 resize-none bg-[var(--surface)] p-3 font-mono sm:p-4 leading-relaxed text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
         style={{ fontSize, tabSize: 4, whiteSpace: wrap ? "pre-wrap" : "pre" }}
       />
 
@@ -422,9 +439,10 @@ export function Notepad({ initialNotes }: { initialNotes: NoteDTO[] }) {
               <LoaderCircle size={12} className="animate-spin" /> Saving…
             </>
           ) : state === "error" ? (
-            <span className="flex items-center gap-1.5 text-[#e11d48]">
-              <CircleAlert size={12} /> Not saved — press Ctrl+S to retry
-            </span>
+            <button type="button" onClick={() => flush(active.id)} className="flex items-center gap-1.5 text-[#e11d48]">
+              <CircleAlert size={12} /> Not saved — <span className="underline">retry</span>
+              <span className="hidden sm:inline">(Ctrl+S)</span>
+            </button>
           ) : (
             <>
               <Check size={12} /> Saved

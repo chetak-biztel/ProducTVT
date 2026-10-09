@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowRight,
   CalendarRange,
@@ -46,6 +46,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [searchOpen, setSearchOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const openSearch = useCallback(() => setSearchOpen(true), []);
@@ -90,16 +91,18 @@ export function AppShell({
     <ShellContext.Provider value={{ openSearch, openQuickAdd }}>
       {children}
 
-      {/* Phone quick-add, sitting above the bottom tab bar. */}
-      <button
-        type="button"
-        onClick={openQuickAdd}
-        className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] md:hidden"
-        style={{ boxShadow: "0 10px 24px -8px color-mix(in srgb, var(--accent) 70%, transparent)" }}
-        aria-label="New todo"
-      >
-        <Plus size={24} />
-      </button>
+      {/* Phone quick-add, sitting above the bottom tab bar (not on the notepad, where it would cover the editor). */}
+      {!pathname.startsWith("/notes") && (
+        <button
+          type="button"
+          onClick={openQuickAdd}
+          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 grid h-14 w-14 place-items-center rounded-full bg-[var(--accent)] text-[var(--accent-fg)] md:hidden"
+          style={{ boxShadow: "0 10px 24px -8px color-mix(in srgb, var(--accent) 70%, transparent)" }}
+          aria-label="New todo"
+        >
+          <Plus size={24} />
+        </button>
+      )}
 
       <CreateTodoDialog
         projects={projects}
