@@ -9,6 +9,7 @@ import {
   CalendarRange,
   CheckSquare,
   FolderKanban,
+  NotebookPen,
   Users,
   ShieldCheck,
   Settings,
@@ -29,6 +30,7 @@ const ICONS: Record<string, LucideIcon> = {
   plan: CalendarRange,
   todos: CheckSquare,
   projects: FolderKanban,
+  notes: NotebookPen,
   team: Users,
   admin: ShieldCheck,
   settings: Settings,
@@ -40,6 +42,7 @@ function buildLinks(role: string) {
     { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
     { href: "/plan", label: "My Weekly Plan", icon: "plan" },
     { href: "/todos", label: "Todos", icon: "todos" },
+    { href: "/notes", label: "Notepad", icon: "notes" },
     { href: "/projects", label: "Projects", icon: "projects" },
   ];
   if (isManager) {
