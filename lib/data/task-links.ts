@@ -2,14 +2,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { currentWeekStart, weekKey } from "@/lib/week";
 
-async function findOrCreateDoneStatus(ownerId: string) {
+export async function findOrCreateDoneStatus(ownerId: string) {
   const existing = await prisma.planStatus.findFirst({ where: { ownerId, name: "Done" } });
   if (existing) return existing;
   const last = await prisma.planStatus.findFirst({ where: { ownerId }, orderBy: { order: "desc" } });
   return prisma.planStatus.create({ data: { ownerId, name: "Done", order: (last?.order ?? -1) + 1 } });
 }
 
-async function findDefaultStatus(ownerId: string) {
+export async function findDefaultStatus(ownerId: string) {
   return (
     (await prisma.planStatus.findFirst({ where: { ownerId, isDefault: true } })) ??
     (await prisma.planStatus.findFirst({ where: { ownerId }, orderBy: { order: "asc" } }))
@@ -132,4 +132,25 @@ export async function syncTaskDone(taskId: string, done: boolean, source: DoneSo
     revalidatePath(`/plan?week=${weekKey(task.linkedPlanItem.weekStartDate)}`);
     revalidatePath(`/team/${assigneeId}?week=${weekKey(task.linkedPlanItem.weekStartDate)}`);
   }
+}
+
+/** Todo → its linked weekly-plan row: marking the todo done moves the row to "Done",
+    un-doing it moves the row back to the default status. */
+export async function syncTodoDoneToPlan(todoId: string, done: boolean) {
+  const planItem = await prisma.planItem.findUnique({ where: { sourceTodoId: todoId } });
+  if (!planItem) return;
+  const status = done ? await findOrCreateDoneStatus(planItem.ownerId) : await findDefaultStatus(planItem.ownerId);
+  if (status && planItem.statusId !== status.id) {
+    await prisma.planItem.update({ where: { id: planItem.id }, data: { statusId: status.id } });
+  }
+  revalidatePath(`/plan?week=${weekKey(planItem.weekStartDate)}`);
+  revalidatePath(`/team/${planItem.ownerId}?week=${weekKey(planItem.weekStartDate)}`);
+  revalidatePath("/dashboard");
+}
+
+/** Weekly-plan row → the todo it was created from: a "Done" status ticks the todo, anything else un-ticks it. */
+export async function syncPlanDoneToTodo(todoId: string, done: boolean) {
+  await prisma.todo.updateMany({ where: { id: todoId, done: !done }, data: { done } });
+  revalidatePath("/todos");
+  revalidatePath("/dashboard");
 }

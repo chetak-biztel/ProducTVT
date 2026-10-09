@@ -76,7 +76,7 @@ export function TodoRow({
               onChange={(v) => save("priority", v)}
               placeholder="Priority"
             />
-            <InlineDate value={todo.dueDate} onSave={(v) => save("dueDate", v)} />
+            <InlineDate value={todo.dueDate} onSave={(v) => save("dueDate", v)} done={todo.done} />
             {projectOptions.length > 0 && (
               <PillSelect
                 value={todo.project?.id}

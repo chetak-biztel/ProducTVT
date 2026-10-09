@@ -13,12 +13,15 @@ export function CustomCell({
   value,
   editable,
   fillWidth,
+  done = false,
 }: {
   planItemId: string;
   column: PlanColumnDTO;
   value: PlanItemValueDTO | undefined;
   editable: boolean;
   fillWidth?: boolean;
+  /** The row's status is "Done" — date cells turn green instead of overdue red. */
+  done?: boolean;
 }) {
   if (column.type === "TEXT") {
     return (
@@ -51,6 +54,7 @@ export function CustomCell({
         value={value?.dateValue ?? null}
         onSave={(v) => setPlanItemScalarValue({ planItemId, columnId: column.id, type: "DATE", value: v })}
         disabled={!editable}
+        done={done}
       />
     );
   }

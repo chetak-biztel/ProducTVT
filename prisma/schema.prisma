@@ -138,6 +138,7 @@ model PlanItem {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   sourceTaskId  String?  @unique
+  sourceTodoId  String?  @unique
 
   owner      User            @relation("PlanOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   category   Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
@@ -145,6 +146,7 @@ model PlanItem {
   assignee   User?           @relation("PlanAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   values     PlanItemValue[]
   sourceTask ProjectTask?    @relation("TaskPlanItem", fields: [sourceTaskId], references: [id], onDelete: Cascade)
+  sourceTodo Todo?           @relation("TodoPlanItem", fields: [sourceTodoId], references: [id], onDelete: SetNull)
 
   @@index([ownerId, weekStartDate])
 }
@@ -224,10 +226,12 @@ model Todo {
   createdAt    DateTime  @default(now())
   sourceTaskId String?   @unique
 
-  owner      User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  project    Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  sourceTask ProjectTask? @relation("TaskTodo", fields: [sourceTaskId], references: [id], onDelete: Cascade)
-  people     TodoPerson[]
+  owner          User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  sourceTask     ProjectTask? @relation("TaskTodo", fields: [sourceTaskId], references: [id], onDelete: Cascade)
+  people         TodoPerson[]
+  // The weekly-plan row created alongside this todo ("Add to this week's plan"); done syncs both ways.
+  linkedPlanItem PlanItem?    @relation("TodoPlanItem")
 
   @@index([ownerId])
 }

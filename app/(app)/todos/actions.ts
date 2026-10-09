@@ -4,7 +4,8 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
-import { syncTaskDone } from "@/lib/data/task-links";
+import { findDefaultStatus, syncTaskDone, syncTodoDoneToPlan } from "@/lib/data/task-links";
+import { currentWeekStart, weekKey } from "@/lib/week";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
 function parseTags(raw: FormDataEntryValue | null): string[] {
@@ -60,7 +61,7 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
 
   const last = await prisma.todo.findFirst({ where: { ownerId: user.id }, orderBy: { order: "desc" }, select: { order: true } });
 
-  await prisma.todo.create({
+  const todo = await prisma.todo.create({
     data: {
       ownerId: user.id,
       title: parsed.data.title,
@@ -73,6 +74,30 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
       people: { create: peopleIds.map((userId) => ({ userId })) },
     },
   });
+
+  if (formData.get("addToPlan")) {
+    const weekStartDate = currentWeekStart();
+    const [status, lastPlan] = await Promise.all([
+      findDefaultStatus(user.id),
+      prisma.planItem.findFirst({
+        where: { ownerId: user.id, weekStartDate },
+        orderBy: { order: "desc" },
+        select: { order: true },
+      }),
+    ]);
+    await prisma.planItem.create({
+      data: {
+        ownerId: user.id,
+        weekStartDate,
+        title: parsed.data.title,
+        statusId: status?.id ?? null,
+        order: (lastPlan?.order ?? -1) + 1,
+        sourceTodoId: todo.id,
+      },
+    });
+    revalidatePath(`/plan?week=${weekKey(weekStartDate)}`);
+    revalidatePath("/plan");
+  }
 
   revalidatePath("/todos");
   revalidatePath("/dashboard");
@@ -124,6 +149,7 @@ export async function toggleTodoDone(id: string, done: boolean) {
   const todo = await assertOwner(id, user.id);
   await prisma.todo.update({ where: { id }, data: { done } });
   if (todo.sourceTaskId) await syncTaskDone(todo.sourceTaskId, done, "todo");
+  await syncTodoDoneToPlan(id, done);
   revalidatePath("/todos");
   revalidatePath("/dashboard");
 }

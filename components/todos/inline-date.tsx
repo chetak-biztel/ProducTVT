@@ -13,15 +13,18 @@ export function InlineDate({
   value,
   onSave,
   disabled = false,
+  done = false,
 }: {
   value: string | null;
   onSave: (value: string) => Promise<void> | void;
   disabled?: boolean;
+  /** The work this date belongs to is finished — shown green instead of overdue red. */
+  done?: boolean;
 }) {
   const [, startTransition] = useTransition();
   const [local, setLocal] = useState(value ? value.slice(0, 10) : "");
   const ref = useRef<HTMLInputElement>(null);
-  const overdue = value && !disabled && new Date(value) < new Date(new Date().toDateString());
+  const overdue = value && !done && !disabled && new Date(value) < new Date(new Date().toDateString());
 
   return (
     <button
@@ -31,9 +34,11 @@ export function InlineDate({
       className={cn(
         "relative flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors",
         value
-          ? overdue
-            ? "border-[color-mix(in_srgb,#e11d48_30%,var(--tint))] bg-[color-mix(in_srgb,#e11d48_10%,var(--tint))] text-rose-600"
-            : "border-[var(--border-strong)] text-[var(--text-muted)]"
+          ? done
+            ? "border-[color-mix(in_srgb,#16a34a_30%,var(--tint))] bg-[color-mix(in_srgb,#16a34a_10%,var(--tint))] text-emerald-600"
+            : overdue
+              ? "border-[color-mix(in_srgb,#e11d48_30%,var(--tint))] bg-[color-mix(in_srgb,#e11d48_10%,var(--tint))] text-rose-600"
+              : "border-[var(--border-strong)] text-[var(--text-muted)]"
           : "border-dashed border-[var(--border-strong)] text-[var(--text-faint)]",
         !disabled && "hover:border-[var(--accent)]",
       )}

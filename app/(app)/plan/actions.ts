@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser, isManagerOrAbove, canManageBoardFor } from "@/lib/rbac";
 import { addWeeks, parseWeekKey, weekKey } from "@/lib/week";
-import { syncTaskDone } from "@/lib/data/task-links";
+import { syncPlanDoneToTodo, syncTaskDone } from "@/lib/data/task-links";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
 const canEditPlanFor = canManageBoardFor;
@@ -143,9 +143,11 @@ export async function updatePlanItemField(input: { id: string; field: string; va
 
   await prisma.planItem.update({ where: { id }, data });
 
-  if (field === "statusId" && item.sourceTaskId) {
+  if (field === "statusId" && (item.sourceTaskId || item.sourceTodoId)) {
     const status = value ? await prisma.planStatus.findUnique({ where: { id: value } }) : null;
-    await syncTaskDone(item.sourceTaskId, status?.name === "Done", "planItem");
+    const done = status?.name === "Done";
+    if (item.sourceTaskId) await syncTaskDone(item.sourceTaskId, done, "planItem");
+    if (item.sourceTodoId) await syncPlanDoneToTodo(item.sourceTodoId, done);
   }
 
   revalidatePlan(item.ownerId, item.weekStartDate);
