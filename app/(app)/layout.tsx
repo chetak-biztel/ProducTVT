@@ -1,14 +1,16 @@
+import { cookies } from "next/headers";
 import { Nav } from "@/components/nav";
 import { requireUser } from "@/lib/rbac";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  const sidebarCollapsed = (await cookies()).get("sidebar")?.value === "collapsed";
 
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
-      <Nav user={{ name: user.name, username: user.username, role: user.role }} />
+      <Nav user={{ name: user.name, username: user.username, role: user.role }} initialCollapsed={sidebarCollapsed} />
       <main className="flex-1 min-w-0">
-        <div className="w-full px-4 py-6 sm:px-6 sm:py-8">{children}</div>
+        <div className="w-full px-4 py-5 sm:px-6 sm:py-8">{children}</div>
       </main>
     </div>
   );
