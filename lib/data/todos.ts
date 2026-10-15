@@ -6,6 +6,8 @@ export async function getTodos(ownerId: string) {
     include: {
       project: { select: { id: true, name: true } },
       people: { include: { user: { select: { id: true, name: true } } } },
+      linkedPlanItem: { select: { weekStartDate: true } },
+      sourceTask: { select: { linkedPlanItem: { select: { weekStartDate: true } } } },
     },
     orderBy: [{ done: "asc" }, { order: "asc" }, { createdAt: "desc" }],
   });

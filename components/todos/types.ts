@@ -11,4 +11,8 @@ export type TodoDTO = {
   tags: string[];
   project: TodoProjectDTO | null;
   people: TodoPersonDTO[];
+  /** Week (yyyy-mm-dd Monday) of the plan row this todo is on, if any. */
+  planWeek: string | null;
+  /** On the plan because it came from an assigned project task — managed by that task, not the checkbox. */
+  planFromTask: boolean;
 };

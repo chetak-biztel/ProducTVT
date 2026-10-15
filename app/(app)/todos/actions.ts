@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
-import { findDefaultStatus, syncTaskDone, syncTodoDoneToPlan } from "@/lib/data/task-links";
+import { findDefaultStatus, findOrCreateDoneStatus, syncTaskDone, syncTodoDoneToPlan } from "@/lib/data/task-links";
 import { currentWeekStart, weekKey } from "@/lib/week";
 import { fail, ok, type ActionState } from "@/lib/actions/types";
 
@@ -75,33 +75,54 @@ export async function createTodoAction(_prev: ActionState, formData: FormData): 
     },
   });
 
-  if (formData.get("addToPlan")) {
-    const weekStartDate = currentWeekStart();
-    const [status, lastPlan] = await Promise.all([
-      findDefaultStatus(user.id),
-      prisma.planItem.findFirst({
-        where: { ownerId: user.id, weekStartDate },
-        orderBy: { order: "desc" },
-        select: { order: true },
-      }),
-    ]);
-    await prisma.planItem.create({
-      data: {
-        ownerId: user.id,
-        weekStartDate,
-        title: parsed.data.title,
-        statusId: status?.id ?? null,
-        order: (lastPlan?.order ?? -1) + 1,
-        sourceTodoId: todo.id,
-      },
-    });
-    revalidatePath(`/plan?week=${weekKey(weekStartDate)}`);
-    revalidatePath("/plan");
-  }
+  if (formData.get("addToPlan")) await addTodoToCurrentPlan(user.id, todo.id, parsed.data.title, false);
 
   revalidatePath("/todos");
   revalidatePath("/dashboard");
   return ok;
+}
+
+/** Adds a linked row for this todo to the owner's current-week plan (Done if the todo already is). */
+async function addTodoToCurrentPlan(ownerId: string, todoId: string, title: string, done: boolean) {
+  const weekStartDate = currentWeekStart();
+  const [status, lastPlan] = await Promise.all([
+    done ? findOrCreateDoneStatus(ownerId) : findDefaultStatus(ownerId),
+    prisma.planItem.findFirst({ where: { ownerId, weekStartDate }, orderBy: { order: "desc" }, select: { order: true } }),
+  ]);
+  await prisma.planItem.create({
+    data: {
+      ownerId,
+      weekStartDate,
+      title,
+      statusId: status?.id ?? null,
+      order: (lastPlan?.order ?? -1) + 1,
+      sourceTodoId: todoId,
+    },
+  });
+  revalidatePath(`/plan?week=${weekKey(weekStartDate)}`);
+  revalidatePath("/plan");
+  revalidatePath(`/team/${ownerId}?week=${weekKey(weekStartDate)}`);
+}
+
+/** The "Add to this week's plan" checkbox on an existing todo: adds or removes its linked plan row. */
+export async function setTodoInPlan(id: string, inPlan: boolean) {
+  const user = await requireUser();
+  await assertOwner(id, user.id);
+  const [todo, linked] = await Promise.all([
+    prisma.todo.findUnique({ where: { id }, select: { title: true, done: true } }),
+    prisma.planItem.findUnique({ where: { sourceTodoId: id }, select: { id: true, weekStartDate: true } }),
+  ]);
+  if (!todo) return;
+
+  if (inPlan && !linked) {
+    await addTodoToCurrentPlan(user.id, id, todo.title, todo.done);
+  } else if (!inPlan && linked) {
+    await prisma.planItem.delete({ where: { id: linked.id } });
+    revalidatePath(`/plan?week=${weekKey(linked.weekStartDate)}`);
+    revalidatePath("/plan");
+  }
+  revalidatePath("/todos");
+  revalidatePath("/dashboard");
 }
 
 const fieldSchema = z.object({

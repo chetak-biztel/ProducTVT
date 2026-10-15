@@ -24,6 +24,8 @@ export default async function TodosPage() {
     tags: t.tags,
     project: t.project,
     people: t.people.map((p) => p.user),
+    planWeek: (t.linkedPlanItem ?? t.sourceTask?.linkedPlanItem)?.weekStartDate.toISOString().slice(0, 10) ?? null,
+    planFromTask: !t.linkedPlanItem && !!t.sourceTask?.linkedPlanItem,
   }));
 
   const allUsers = users.filter((u) => u.id !== user.id).map((u) => ({ id: u.id, name: u.name }));
