@@ -37,9 +37,10 @@ export function TodoList({
   const hasFilters = projectId || personId || tag;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* Phones: the status toggle gets its own full-width row and the dropdowns share the row below. */}
+    <div className="flex flex-col gap-4">
+      {/* Phones: the filters sit under the list, the status toggle on its own full-width row
+          and the dropdowns sharing the row below it. */}
+      <div className="order-last flex flex-wrap items-center gap-2 sm:order-none">
         <div className="glass flex w-full items-center gap-1 rounded-xl p-1 sm:inline-flex sm:w-auto">
           {(["open", "done", "all"] as StatusFilter[]).map((s) => (
             <button
