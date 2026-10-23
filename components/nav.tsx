@@ -152,7 +152,7 @@ export function Nav({
   return (
     <>
       {/* Mobile top bar */}
-      <header className="glass sticky top-0 z-30 flex items-center justify-between px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:hidden">
+      <header className="glass-bar sticky top-0 z-30 flex items-center justify-between border-b px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:hidden">
         {brand(false)}
         <div className="flex items-center gap-1">
           <button className="btn btn-ghost btn-icon" onClick={openSearch} aria-label="Search">
@@ -164,7 +164,7 @@ export function Nav({
 
       {/* Phone bottom tab bar */}
       <nav
-        className="glass fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] pb-[env(safe-area-inset-bottom)] md:hidden"
+        className="glass-bar fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[var(--border)] pb-[env(safe-area-inset-bottom)] md:hidden"
         aria-label="Main"
       >
         {TAB_BAR_LINKS.map((l) => {
