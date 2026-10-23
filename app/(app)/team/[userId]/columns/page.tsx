@@ -39,7 +39,6 @@ export default async function TeamMemberColumnsPage({ params }: { params: Promis
             Edit {member.name}&apos;s columns
           </span>
         }
-        subtitle="Every field on their weekly plan table — drag to reorder, rename, hide, or add your own."
       >
         <AddColumnDialog ownerId={member.id} />
       </PageHeader>

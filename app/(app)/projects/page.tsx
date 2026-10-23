@@ -30,7 +30,7 @@ export default async function ProjectsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Projects" subtitle="Team projects and your own personal work, organized by section.">
+      <PageHeader title="Projects">
         <CreateProjectDialog allUsers={allUsers} />
       </PageHeader>
 

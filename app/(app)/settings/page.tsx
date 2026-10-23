@@ -19,7 +19,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-xl">
-      <PageHeader title="Settings" subtitle="Manage your account." />
+      <PageHeader title="Settings" />
 
       <div className="card mb-6 flex items-center gap-4 p-5">
         <Avatar name={user.name} size={44} />

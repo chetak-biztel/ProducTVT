@@ -26,7 +26,7 @@ export default async function PlanPage({
 
   return (
     <div>
-      <PageHeader title="My Weekly Plan" subtitle="Plan your week, track status, and jot remarks as you go.">
+      <PageHeader title="My Weekly Plan">
         <WeekSwitcher weekStartIso={weekStart.toISOString()} basePath="/plan" ownerId={user.id} />
       </PageHeader>
 

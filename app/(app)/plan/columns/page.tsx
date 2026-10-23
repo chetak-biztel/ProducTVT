@@ -22,10 +22,7 @@ export default async function PlanColumnsPage() {
         <ArrowLeft size={14} /> Back to My Weekly Plan
       </Link>
 
-      <PageHeader
-        title="Edit Columns"
-        subtitle="Every field on your weekly plan table — drag to reorder, rename, hide, or add your own."
-      >
+      <PageHeader title="Edit Columns">
         <AddColumnDialog ownerId={user.id} />
       </PageHeader>
 

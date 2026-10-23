@@ -7,7 +7,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   await requireManager();
   return (
     <div>
-      <PageHeader title="Admin" subtitle="Manage people and how the plan board looks.">
+      <PageHeader title="Admin">
         <Link href="/settings" className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]">
           Account settings →
         </Link>

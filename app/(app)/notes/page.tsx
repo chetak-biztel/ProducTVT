@@ -16,7 +16,7 @@ export default async function NotesPage() {
 
   return (
     <div>
-      <PageHeader title="Notepad" subtitle="Quick plain-text notes — saved automatically as you type." />
+      <PageHeader title="Notepad" />
       <Notepad initialNotes={initial} />
     </div>
   );
