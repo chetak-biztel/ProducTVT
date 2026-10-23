@@ -39,13 +39,14 @@ export function TodoList({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="glass inline-flex items-center gap-1 rounded-xl p-1">
+        {/* Phones: the status toggle gets its own full-width row and the dropdowns share the row below. */}
+        <div className="glass flex w-full items-center gap-1 rounded-xl p-1 sm:inline-flex sm:w-auto">
           {(["open", "done", "all"] as StatusFilter[]).map((s) => (
             <button
               key={s}
               onClick={() => setStatus(s)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors",
+                "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium capitalize transition-colors sm:flex-none",
                 status === s ? "bg-[var(--accent)] text-[var(--accent-fg)]" : "text-[var(--text-muted)] hover:text-[var(--text)]",
               )}
             >
@@ -55,7 +56,7 @@ export function TodoList({
         </div>
 
         {projects.length > 0 && (
-          <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="select !w-auto text-sm">
+          <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="select min-w-0 flex-1 text-sm sm:!w-auto sm:flex-none">
             <option value="">All projects</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
@@ -65,7 +66,7 @@ export function TodoList({
           </select>
         )}
 
-        <select value={personId} onChange={(e) => setPersonId(e.target.value)} className="select !w-auto text-sm">
+        <select value={personId} onChange={(e) => setPersonId(e.target.value)} className="select min-w-0 flex-1 text-sm sm:!w-auto sm:flex-none">
           <option value="">Everyone</option>
           {allUsers.map((u) => (
             <option key={u.id} value={u.id}>
@@ -75,7 +76,7 @@ export function TodoList({
         </select>
 
         {allTags.length > 0 && (
-          <select value={tag} onChange={(e) => setTag(e.target.value)} className="select !w-auto text-sm">
+          <select value={tag} onChange={(e) => setTag(e.target.value)} className="select min-w-0 flex-1 text-sm sm:!w-auto sm:flex-none">
             <option value="">All labels</option>
             {allTags.map((t) => (
               <option key={t} value={t}>

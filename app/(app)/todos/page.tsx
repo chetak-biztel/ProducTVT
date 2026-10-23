@@ -33,7 +33,10 @@ export default async function TodosPage() {
   return (
     <div>
       <PageHeader title="Todos" subtitle="Your personal task list — tag a project, people, or labels to stay organized.">
-        <CreateTodoDialog projects={projects} allUsers={allUsers} />
+        {/* Phones already have the floating + button for this. */}
+        <div className="hidden md:block">
+          <CreateTodoDialog projects={projects} allUsers={allUsers} />
+        </div>
       </PageHeader>
 
       <TodoList todos={todos} projects={projects} allUsers={allUsers} />
