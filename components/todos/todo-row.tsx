@@ -89,7 +89,7 @@ export function TodoRow({
           )}
           aria-label={done ? "Mark as not done" : "Mark as done"}
         >
-          {done && <span className="h-2 w-2 rounded-full bg-white" />}
+          {done && <span className="h-2 w-2 rounded-full bg-[var(--accent-fg)]" />}
         </button>
 
         <div className="min-w-0 flex-1">

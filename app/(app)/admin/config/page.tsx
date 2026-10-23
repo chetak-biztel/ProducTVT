@@ -1,5 +1,5 @@
 import { requireManager } from "@/lib/rbac";
-import { getAccentColor } from "@/lib/theme";
+import { DEFAULT_ACCENT, getAccentColor } from "@/lib/theme";
 import { AccentPicker } from "@/components/admin/accent-picker";
 
 export default async function AdminConfigPage() {
@@ -11,11 +11,12 @@ export default async function AdminConfigPage() {
       <section className="card p-5">
         <h2 className="font-semibold text-[var(--text)]">Accent color</h2>
         <p className="mt-1 text-sm text-[var(--text-muted)]">
-          Sets the workspace-wide default accent. Anyone can override it for themselves under{" "}
+          Sets the workspace-wide default accent. Left unset, the app uses the Day Tracker colours (cyan in light mode,
+          grey in dark mode). Anyone can override it for themselves under{" "}
           <span className="font-medium text-[var(--text)]">Settings → Appearance</span>.
         </p>
         <div className="mt-4">
-          <AccentPicker current={accent} />
+          <AccentPicker current={accent ?? DEFAULT_ACCENT} isSet={!!accent} />
         </div>
       </section>
 

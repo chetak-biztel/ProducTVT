@@ -153,3 +153,11 @@ export async function setAccentColorAction(_prev: ActionState, formData: FormDat
   revalidatePath("/", "layout");
   return ok;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature required by useActionState
+export async function clearAccentColorAction(_prev: ActionState, _formData: FormData): Promise<ActionState> {
+  await requireManager();
+  await prisma.appSetting.deleteMany({ where: { key: "accentColor" } });
+  revalidatePath("/", "layout");
+  return ok;
+}

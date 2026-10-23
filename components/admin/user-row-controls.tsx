@@ -40,7 +40,8 @@ export function ActiveToggle({ userId, active, disabled }: { userId: string; act
     >
       <span
         className={cn(
-          "inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow transition-transform",
+          "inline-block h-[18px] w-[18px] transform rounded-full shadow transition-transform",
+          active ? "bg-[var(--accent-fg)]" : "bg-white",
           active ? "translate-x-5" : "translate-x-1",
         )}
       />

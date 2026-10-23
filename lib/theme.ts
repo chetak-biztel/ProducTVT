@@ -1,26 +1,28 @@
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 
-export const DEFAULT_ACCENT = "#2563eb";
+/** Starting value for the colour pickers. The app itself uses each theme's own accent
+    (cyan in light, grey in dark) until someone picks one. */
+export const DEFAULT_ACCENT = "#0891b2";
 
 function isHexColor(v: string | null | undefined): v is string {
   return !!v && /^#([0-9a-fA-F]{6})$/.test(v.trim());
 }
 
-/** Reads the app-wide accent color; falls back to the default if unset/unavailable. */
-export async function getAccentColor(): Promise<string> {
+/** Reads the app-wide accent color; null if unset/unavailable (use the theme default). */
+export async function getAccentColor(): Promise<string | null> {
   try {
     const row = await prisma.appSetting.findUnique({ where: { key: "accentColor" } });
     if (isHexColor(row?.value)) return row.value.trim();
   } catch {
-    // DB not ready — use default so the app still renders.
+    // DB not ready — use the theme default so the app still renders.
   }
-  return DEFAULT_ACCENT;
+  return null;
 }
 
 /** Resolves the accent for the current request: the signed-in user's own color choice
-    if they've set one, else the workspace-wide default. */
-export async function getEffectiveAccentColor(): Promise<string> {
+    if they've set one, else the workspace-wide default, else null for the theme default. */
+export async function getEffectiveAccentColor(): Promise<string | null> {
   const workspaceDefault = await getAccentColor();
   try {
     const session = await auth();

@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/rbac";
-import { getAccentColor } from "@/lib/theme";
+import { DEFAULT_ACCENT, getAccentColor } from "@/lib/theme";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/page-header";
 import { Avatar } from "@/components/ui/avatar";
@@ -37,7 +37,7 @@ export default async function SettingsPage() {
           Pick the accent color used across buttons, links and highlights on your pages.
         </p>
         <div className="mt-4">
-          <AppearanceForm current={record?.accentColor ?? workspaceDefault} hasOverride={!!record?.accentColor} />
+          <AppearanceForm current={record?.accentColor ?? workspaceDefault ?? DEFAULT_ACCENT} hasOverride={!!record?.accentColor} />
         </div>
       </div>
 

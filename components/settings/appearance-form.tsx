@@ -6,7 +6,7 @@ import { Check, Loader2 } from "lucide-react";
 import { setOwnAccentColorAction, clearOwnAccentColorAction } from "@/app/(app)/settings/actions";
 import type { ActionState } from "@/lib/actions/types";
 
-const SWATCHES = ["#2563eb", "#0ea5e9", "#7c3aed", "#e11d48", "#f59e0b", "#16a34a", "#0f172a"];
+const SWATCHES = ["#2563eb", "#0891b2", "#7c3aed", "#e11d48", "#f59e0b", "#16a34a", "#0f172a"];
 
 export function AppearanceForm({ current, hasOverride }: { current: string; hasOverride: boolean }) {
   const router = useRouter();
