@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=ProducTVT Todos
+Comment=Top-bar todo list for ProducTVT (Super+Shift+T)
+Exec=/usr/bin/python3 /home/biztelai/Projects/ProductVT/tray/productvt-tray.py
+Icon=/home/biztelai/Projects/ProductVT/app/icon.png
+X-GNOME-Autostart-enabled=true
+NoDisplay=false

@@ -14,7 +14,7 @@
 :root{
   /* Category colours: one palette validated for both themes (lightness band, colour-blind separation).
      UI chrome uses --accent instead, so the neon cyan never competes with the data. */
-  --work:#0891b2;--study:#7c3aed;--fun:#be123c;--workout:#65a30d;--break:#a16207;
+  --work:#0891b2;--study:#06b6d4;--fun:#be123c;--workout:#65a30d;--break:#a16207;
   --accent:#00f2fe;--danger:#f43f5e;--ok:#10e7a2;--warn:#fbbf24;--icon:#e8f1fb;
 }
 body.theme-dark{
@@ -99,6 +99,9 @@ header h1{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
 
 /* ---------- timer card ---------- */
 #cats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+/* PC: the running timer sits above the category tiles */
+.area-timer{display:flex;flex-direction:column}
+.area-timer #now{order:-1;margin-bottom:24px}
 .cat{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:18px 12px;min-height:90px;border-radius:16px;
   background:var(--glass-bg-subtle);border:1px solid var(--glass-border);transition:all .22s cubic-bezier(.16,1,.3,1)}
 .cat:hover{background:var(--glass-bg-hover);transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 50%,transparent);box-shadow:0 10px 24px -6px rgba(0,0,0,.35)}
@@ -188,6 +191,7 @@ header h1{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
 #entries li:hover{background:var(--glass-bg-hover);transform:translateX(4px);border-color:var(--accent);box-shadow:0 4px 18px -4px color-mix(in srgb,var(--accent) 18%,transparent)}
 #entries li.empty{cursor:default;color:var(--text-muted);justify-content:center}
 .todo-cols{display:grid;gap:24px}
+.settings-content.todo-cols{display:grid;flex-direction:initial}
 @media(min-width:900px){.todo-cols{grid-template-columns:1fr 1fr}}
 .todo-cols h4{font-size:14px;font-weight:700;margin-bottom:10px}
 .todo-add{display:flex;gap:8px;margin-bottom:12px}.todo-add .field{flex:1;min-width:0}
@@ -354,6 +358,74 @@ body.theme-light #focus{--accent:#00f2fe;--icon:#e8f1fb}
   body.theme-dark .glass-surface,body.theme-dark details.settings-box,body.theme-dark dialog#dlg{background:rgba(13,22,38,.96)}
   body.theme-light .glass-surface,body.theme-light details.settings-box,body.theme-light dialog#dlg{background:rgba(255,255,255,.97)}
 }
+/* ---------- phone (640px and under): its own layout; everything above stays the PC page ---------- */
+.m-only,.nm-short,.gbar{display:none}
+@media (max-width:640px){
+  html.embedded{overflow:hidden} /* inside ProducTVT the frame grows to fit, so the app's page is the only scroll */
+  body{min-height:0}
+  .dash{gap:12px}
+  .m-only{display:block}
+  #mLive{position:sticky;top:8px;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;margin:0 0 12px;border-radius:16px;cursor:pointer;
+    background:var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(18px) saturate(180%);-webkit-backdrop-filter:blur(18px) saturate(180%);box-shadow:var(--glass-shadow)}
+  #mLive .what{flex:1;min-width:0;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mLive .what span{color:var(--text-muted);font-weight:500}
+  #mLive.idle .what{color:var(--text-muted);font-weight:600;font-size:13px}
+  #mLive .clk{font:700 17px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+  #mStop{width:34px;height:34px;flex:none;border-radius:50%;border:1px solid var(--glass-border);background:var(--glass-bg-subtle);display:grid;place-items:center;color:var(--danger)}
+  #mStop i{width:11px;height:11px;border-radius:2px;background:currentColor}
+  .area-timer{background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0!important}
+  #cats{grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+  .cat{min-height:0;padding:8px 2px;gap:2px;border-radius:14px}
+  .cat:hover,.cat.on{transform:none}
+  .cat .ico{width:18px;height:18px}
+  .cat .nm{display:none}
+  .cat .nm-short{display:block;font-size:11px;font-weight:700}
+  .cat .t{font-size:10px}
+  .cat.on::after{top:5px;right:5px;width:6px;height:6px}
+  #now,.timer-footer>span{display:none}
+  .timer-footer{margin:0 0 4px;justify-content:flex-end}
+  .area-timer #now{order:0}
+  #mOver:empty{display:none}
+  #mOver{padding:10px 14px;border-radius:14px;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--danger);
+    background:color-mix(in srgb,var(--danger) 10%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent)}
+  .donut-wrap{display:none}
+  .today-body{gap:6px;margin-bottom:16px}
+  #mStack .sum{display:flex;align-items:baseline;justify-content:space-between}
+  #mStack .sum b{font:700 28px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+  #mStack .sum span{font-size:12px;font-weight:600;color:var(--text-muted)}
+  #mStack .bar{display:flex;height:12px;border-radius:99px;overflow:hidden;background:var(--progress-track);margin:8px 0 6px}
+  .tot{grid-template-columns:10px 1fr auto;padding:7px 2px}
+  .tot .v-icon{display:none}
+  .tot .goal{grid-column:2/4}
+  .tot.over,.tot:hover,.tot.hl{background:none;border-color:transparent}
+  .gbar{display:block;grid-column:2/4;height:5px;border-radius:9px;background:var(--progress-track);overflow:hidden;margin:3px 0 1px}
+  .gbar i{display:block;height:100%;border-radius:9px;background:var(--c)}
+  .tot.over .gbar i{background:var(--danger)}
+  .timeline-container{margin-bottom:4px}
+  .timeline-header{font-size:10px}
+  #timeline{height:18px}
+  .day-nav{margin-bottom:14px;padding-bottom:12px}
+  #dayTitle{font-size:16px;margin:0 4px}
+  #today.is-today{display:none}
+  #entries{gap:0}
+  #entries li{display:grid;grid-template-columns:10px 1fr auto;gap:2px 10px;padding:10px 2px;border:0;border-bottom:1px solid var(--progress-track);border-radius:0;background:none}
+  #entries li:hover{transform:none;box-shadow:none;background:none;border-color:var(--progress-track)}
+  #entries li.more{display:block;border:0;padding:8px 0 0}
+  #entries .c{font-weight:700;font-size:14px}
+  #entries .c small{font-size:11px;font-weight:500;color:var(--text-subtle);margin-left:6px}
+  #entries .c .tag{margin-left:6px;vertical-align:2px}
+  #entries .apps{grid-column:2/4;font-size:12px;color:var(--text-muted);overflow-wrap:anywhere}
+  #entries .dur{font:700 13px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+  #moreShort{width:100%;padding:9px;border-radius:12px;border:1px dashed var(--glass-border);background:none;color:var(--text-muted);font-weight:600;font-size:13px}
+  .fold{padding:16px 18px!important}
+  .fold>.card-title{cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin:0;font-size:15px}
+  .fold>.card-title::after{content:"›";transform:rotate(90deg);transition:transform .2s ease;color:var(--text-subtle);font-size:20px;line-height:1}
+  .fold.open>.card-title{margin-bottom:14px}
+  .fold.open>.card-title::after{transform:rotate(-90deg)}
+  .fold:not(.open)>:not(.card-title){display:none!important} /* beats #week, #heat... */
+  dialog#dlg{margin:0;top:auto;bottom:0;width:100%;max-width:none;border-radius:24px 24px 0 0}
+  #dlgForm{padding:20px 18px 24px;gap:14px}
+}
 /* Embedded in ProducTVT: its sidebar has the brand and theme toggle, its background shows through. */
 body{background:transparent!important}
 .ambient-blobs,.brand-mark,#themeToggle,#hubState.off:empty{display:none!important}
@@ -403,10 +475,12 @@ body{background:transparent!important}
       </button>
     </div>
   </header>
+  <div id="mLive" class="m-only" role="button" aria-label="Running timer"></div>
 
   <main class="dash">
     <section class="glass-surface card-pad area-timer">
       <div id="cats"></div>
+      <div id="mOver" class="m-only" role="alert"></div>
       <div id="banner">
         <div class="banner-content">
           <span class="v-icon"><svg viewBox="0 0 24 24"><use href="#ico-break"/></svg></span>
@@ -439,6 +513,7 @@ body{background:transparent!important}
         </div>
       </div>
       <div class="today-body">
+        <div id="mStack" class="m-only"></div>
         <div class="donut-wrap">
           <svg id="donut" viewBox="0 0 200 200" role="img" aria-label="Time by category">
             <circle class="donut-track" cx="100" cy="100" r="80"/>
@@ -449,7 +524,7 @@ body{background:transparent!important}
         <div id="totals"></div>
       </div>
       <div class="timeline-container">
-        <div class="timeline-header"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        <div class="timeline-header" id="timelineHead"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
         <div id="timeline"></div>
       </div>
     </section>
@@ -459,29 +534,29 @@ body{background:transparent!important}
       <ul id="entries"></ul>
     </section>
 
-    <section class="glass-surface card-pad area-week">
+    <section class="glass-surface card-pad area-week fold">
       <h3 class="card-title">Last 7 days</h3>
       <div id="week"></div>
       <div id="wlab"></div>
       <table id="wtable"></table>
     </section>
 
-    <section class="glass-surface card-pad area-trend">
+    <section class="glass-surface card-pad area-trend fold">
       <h3 class="card-title">This week vs last week</h3>
       <div class="table-wrap"><table id="trend"></table></div>
       <p class="settings-note" style="margin-top:12px">Weeks start on Monday. Last week is counted up to the same day and time.</p>
     </section>
 
-    <section class="glass-surface card-pad area-streak">
+    <section class="glass-surface card-pad area-streak fold">
       <h3 class="card-title">Study streak</h3>
       <div class="streak-head" id="streakHead"></div>
       <div id="heat" role="img" aria-label="Study time per day"></div>
       <div class="heat-legend">Less <i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div>
     </section>
 
-    <section class="glass-surface card-pad area-todos">
-      <h3 class="card-title">Todos &amp; reminders</h3>
-      <div class="todo-cols">
+    <details class="settings-box area-todos" id="todosBox">
+      <summary>Todos &amp; reminders</summary>
+      <div class="settings-content todo-cols">
         <div>
           <form class="todo-add" id="todoForm"><input class="field" id="todoText" placeholder="Add a todo" maxlength="200" aria-label="New todo"><button class="nav-btn">Add</button></form>
           <ul class="todo-list" id="todos"></ul>
@@ -491,7 +566,7 @@ body{background:transparent!important}
           <ul class="todo-list" id="reminders"></ul>
         </div>
       </div>
-    </section>
+    </details>
 
     <details class="settings-box area-settings">
       <summary>Settings &amp; data</summary>
@@ -729,18 +804,19 @@ function toggle(cat) {
 
 // ---------- rendering ----------
 let viewDay = startOfDay(Date.now());
+const phoneMq = matchMedia('(max-width:640px)'), phone = () => phoneMq.matches;
 
 function buildStatic() {
   $('cats').innerHTML = CATS.map(c =>
     `<button class="cat" data-cat="${c.id}" style="--c:var(--${c.id})">
-       <span class="ico">${ico(c.id)}</span><span class="nm">${c.label}</span><span class="t"></span>
+       <span class="ico">${ico(c.id)}</span><span class="nm">${c.label}</span><span class="nm-short">${c.id === 'fun' ? 'Fun' : c.label}</span><span class="t"></span>
      </button>`).join('');
   $('cats').onclick = e => { const b = e.target.closest('.cat'); if (b) toggle(b.dataset.cat); };
 
   $('totals').innerHTML = CATS.map(c =>
     `<div class="tot" data-cat="${c.id}" style="--c:var(--${c.id})">
        <span class="dot"></span><span class="v-icon">${ico(c.id)}</span><span class="tot-name">${c.label}</span>
-       <span class="val"></span><span class="goal"></span>
+       <span class="val"></span><span class="goal"></span><span class="gbar"><i></i></span>
      </div>`).join('');
   $('donutSegs').innerHTML = CATS.map(c =>
     `<circle data-cat="${c.id}" cx="100" cy="100" r="80" stroke="var(--${c.id})" stroke-dasharray="0 ${DONUT_C}"><title></title></circle>`).join('');
@@ -826,6 +902,7 @@ function renderDay() {
   const isToday = viewDay === startOfDay(Date.now());
   $('dayTitle').textContent = isToday ? 'Today' : new Date(viewDay).toLocaleDateString(undefined, DAY_FMT);
   $('next').disabled = isToday;
+  $('today').classList.toggle('is-today', isToday);
 
   $('sessTitle').textContent = isToday ? 'Sessions today' : 'Sessions · ' + new Date(viewDay).toLocaleDateString(undefined, DAY_FMT);
   const total = Object.values(t).reduce((a, b) => a + b, 0);
@@ -842,7 +919,11 @@ function renderDay() {
     row.querySelector('.goal').textContent = !goal ? '' :
       g.kind === 'max' ? (over ? `${fmtDur(ms - goal)} over the ${fmtDur(goal)} limit` : `limit ${fmtDur(goal)}`) :
       met ? `goal ${fmtDur(goal)} reached` : `${Math.round(ms / goal * 100)}% of ${fmtDur(goal)} goal`;
+    row.querySelector('.gbar').style.visibility = goal ? '' : 'hidden';
+    row.querySelector('.gbar i').style.width = goal ? Math.min(100, ms / goal * 100) + '%' : '0';
   }
+  setHTML($('mStack'), `<div class="sum"><b>${fmtDur(total)}</b><span>${isToday ? 'tracked today' : 'tracked'}</span></div>
+    <div class="bar">${CATS.filter(c => t[c.id]).map(c => `<i style="width:${t[c.id] / total * 100}%;background:var(--${c.id})"></i>`).join('')}</div>`);
 
   // Donut: slices in the fixed category order, with a small gap between neighbours.
   let acc = 0;
@@ -857,12 +938,23 @@ function renderDay() {
   $('donut').setAttribute('aria-label', 'Time by category: ' + CATS.map(c => `${c.label} ${fmtDur(t[c.id])}`).join(', '));
   renderDonutCenter();
 
-  const end = addDays(viewDay, 1), span = end - viewDay;
-  $('timeline').innerHTML = sessions()
-    .filter(s => overlap(s.start, s.end, viewDay, end))
+  // The PC shows the whole day; a phone only the hours that have something in them (at least 4).
+  const end = addDays(viewDay, 1), H = 3600000, inDay = sessions().filter(s => overlap(s.start, s.end, viewDay, end));
+  let lo = viewDay, hi = end;
+  if (phone() && inDay.length) {
+    lo = viewDay + Math.floor((Math.max(viewDay, Math.min(...inDay.map(s => s.start))) - viewDay) / H) * H;
+    hi = viewDay + Math.ceil((Math.min(end, Math.max(...inDay.map(s => s.end))) - viewDay) / H) * H;
+    if (hi - lo < 4 * H) { hi = Math.min(end, lo + 4 * H); lo = Math.max(viewDay, hi - 4 * H); }
+  }
+  const span = hi - lo;
+  setHTML($('timelineHead'), [0, 1, 2, 3, 4].map(i => {
+    const m = Math.round((lo - viewDay + span * i / 4) / MIN);
+    return `<span>${pad(Math.floor(m / 60))}:${pad(m % 60)}</span>`;
+  }).join(''));
+  $('timeline').innerHTML = inDay
     .map(s => {
-      const l = (Math.max(s.start, viewDay) - viewDay) / span * 100;
-      const w = overlap(s.start, s.end, viewDay, end) / span * 100;
+      const l = (Math.max(s.start, lo) - lo) / span * 100;
+      const w = overlap(s.start, s.end, lo, hi) / span * 100;
       return `<i style="--c:var(--${s.cat});left:${l}%;width:${Math.max(w, .3)}%" title="${CAT[s.cat].label} ${fmtTime(s.start)}–${fmtTime(s.end)}"></i>`;
     }).join('');
 }
@@ -899,6 +991,7 @@ function partsText(s) {
 function renderEntries() {
   const end = addDays(viewDay, 1);
   const list = sessions().filter(s => overlap(s.start, s.end, viewDay, end)).sort((a, b) => b.start - a.start);
+  if (phone()) return renderPhoneEntries(list);
   $('entries').innerHTML = list.length ? list.map(s =>
     `<li data-id="${s.live ? '' : s.id}">
        <div class="entry-left">
@@ -1022,8 +1115,69 @@ function checkBreak() {
 
 const esc = s => s.replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
 
+// Phone: neighbouring sessions of the same category and app are one row, short ones wait behind a button,
+// and only manual entries carry a tag (nearly everything is detected).
+const SHORT = 5 * MIN, JOIN_GAP = 30 * MIN;
+let showShort = false;
+function groupSessions(list) { // list: newest first
+  const groups = [];
+  for (const s of list) {
+    const key = [s.cat, s.label || s.note || '', !!s.auto].join('|');
+    let g = null; // the nearest group with this key, looking past short ones of other kinds in between
+    for (let i = groups.length - 1; i >= 0; i--) {
+      if (groups[i].key === key) { g = groups[i]; break; }
+      if (groups[i].live || groups[i].ms >= SHORT) break;
+    }
+    if (g && !s.live && !g.live && g.start - s.end <= JOIN_GAP) { g.start = s.start; g.ms += s.end - s.start; g.items.push(s); }
+    else groups.push({key, s, live: !!s.live, start: s.start, ms: s.end - s.start, items: [s]});
+  }
+  return groups;
+}
+function groupApps(g) {
+  const p = {};
+  for (const s of g.items) {
+    const parts = s.parts && Object.keys(s.parts).length ? s.parts : {[s.label || '']: s.end - s.start};
+    for (const [l, ms] of Object.entries(parts)) p[l] = (p[l] || 0) + ms;
+  }
+  const list = Object.entries(p).filter(([l, ms]) => l && ms >= MIN).sort((a, b) => b[1] - a[1]);
+  const apps = list.length > 1 ? list.map(([l, ms]) => `${l} ${fmtDur(ms)}`).join(', ') : list.length ? list[0][0] : g.s.label || '';
+  const notes = [...new Set(g.items.map(s => s.note).filter(Boolean))].join(' · ');
+  return [apps, notes].filter(Boolean).join(' · ');
+}
+function renderPhoneEntries(list) {
+  const live = new Set(list.filter(s => s.live).map(s => s.id)); // the running session can also sit in the saved list
+  const groups = groupSessions(list.filter(s => s.live || !live.has(s.id))), shown = groups.filter(g => showShort || g.live || g.ms >= SHORT), hidden = groups.length - shown.length;
+  const rows = shown.map(g => {
+    const apps = groupApps(g);
+    return `<li data-id="${g.live ? '' : g.s.id}">
+       <span class="dot" style="--c:var(--${g.s.cat})"></span>
+       <span class="c">${CAT[g.s.cat].label}${g.s.auto ? '' : '<span class="tag">manual</span>'}<small>${fmtTime(g.start)}${g.live ? '–now' : ''}</small></span>
+       <span class="dur">${fmtDur(g.ms)}</span>
+       ${apps ? `<span class="apps">${esc(apps)}</span>` : ''}
+     </li>`;
+  });
+  if (hidden || showShort) rows.push(`<li class="more"><button id="moreShort">${showShort ? 'Hide short sessions' : `+ ${hidden} short session${hidden === 1 ? '' : 's'} under 5 min`}</button></li>`);
+  $('entries').innerHTML = rows.length ? rows.join('') : '<li class="empty">No entries for this day.</li>';
+}
+
+// Phone: the running timer as a strip that stays in view, and today's over-limit warning as a banner.
+function renderPhone() {
+  if (!phone()) return;
+  const a = S.active, cur = a || liveAuto();
+  setHTML($('mLive'), cur
+    ? `<span class="dot" style="--c:var(--${cur.cat})"></span><div class="what">${CAT[cur.cat].label}${cur.label ? ` <span>· ${esc(cur.label)}</span>` : ''}</div>
+       <span class="clk" id="mClk"></span>${a ? '<button id="mStop" aria-label="Stop the timer"><i></i></button>' : '<span class="tag">auto</span>'}`
+    : '<div class="what">Nothing running · tap a category to start</div>');
+  $('mLive').classList.toggle('idle', !cur);
+  if (cur) $('mClk').textContent = fmtClock(Date.now() - cur.start);
+  const t = totalsFor(startOfDay(Date.now())), sunday = new Date().getDay() === 0; // Sunday: no limits
+  setHTML($('mOver'), sunday ? '' : CATS.filter(c => { const g = S.goals[c.id]; return g.kind === 'max' && g.mins > 0 && t[c.id] > g.mins * MIN; })
+    .map(c => `⚠ ${c.label} is ${fmtDur(t[c.id] - S.goals[c.id].mins * MIN)} over today's ${fmtDur(S.goals[c.id].mins * MIN)} limit`).join('<br>'));
+  stickLive();
+}
+
 function renderAll() {
-  renderNow(); renderCats(); renderDay(); renderEntries(); renderWeek(); renderTrend(); renderStreak(); renderSettings(); checkBreak(); renderFocus(); renderTodos();
+  renderNow(); renderCats(); renderDay(); renderEntries(); renderWeek(); renderTrend(); renderStreak(); renderSettings(); checkBreak(); renderFocus(); renderTodos(); renderPhone();
   syncWakeLock();
 }
 
@@ -1036,7 +1190,7 @@ setInterval(() => {
     lastToday = today; renderAll();
   }
   checkCountdown(); checkReminders();
-  renderNow(); renderCats(); renderDay(); checkBreak(); renderFocus();
+  renderNow(); renderCats(); renderDay(); checkBreak(); renderFocus(); renderPhone();
   if (++ticks % 60 === 0) { renderEntries(); renderWeek(); renderTrend(); renderStreak(); }
 }, 1000);
 
@@ -1083,9 +1237,11 @@ function openDialog(entry) {
   $('fDel').style.visibility = entry ? 'visible' : 'hidden';
   $('fErr').textContent = '';
   $('dlg').showModal();
+  placeSheet();
 }
 $('add').onclick = () => openDialog(null);
 $('entries').onclick = e => {
+  if (e.target.closest('#moreShort')) { showShort = !showShort; renderEntries(); return; }
   const li = e.target.closest('li[data-id]');
   if (li && li.dataset.id) openDialog(findEntry(li.dataset.id));
 };
@@ -1224,14 +1380,14 @@ function openFocus() {
   $('focus').classList.add('open');
   const el = document.documentElement;
   if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => {});
-  renderAll();
+  renderAll(); placeFocus();
 }
 function closeFocus() {
   $('focus').classList.remove('open');
   if (location.hash === '#focus') history.replaceState(null, '', location.pathname);
   focusEdit = focusDone = null;
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  renderAll();
+  renderAll(); placeFocus();
 }
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -1377,6 +1533,64 @@ const osTheme = () => matchMedia('(prefers-color-scheme: light)').matches ? 'lig
 applyTheme(parentTheme() || osTheme());
 try { new MutationObserver(() => applyTheme(parentTheme() || osTheme())).observe(parent.document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch {}
 matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyTheme(parentTheme() || osTheme()));
+
+// ---------- phone, inside ProducTVT ----------
+// The frame grows to fit the page, so only the app's page scrolls (no box scrolling inside a box). The live strip
+// then can't be sticky by itself, so it follows the app's scroll; the add/edit sheet opens above the app's tab bar.
+const frame = (() => { try { return frameElement && parent.document && frameElement; } catch { return null; } })();
+if (frame) document.documentElement.classList.add('embedded');
+function fitFrame() {
+  if (frame) frame.style.height = phone() ? document.documentElement.scrollHeight + 'px' : '';
+}
+function stickLive() {
+  const el = $('mLive');
+  if (!frame || !phone()) { el.style.transform = ''; return; }
+  const top = frame.getBoundingClientRect().top;
+  const head = parent.document.querySelector('header.sticky')?.getBoundingClientRect().bottom || 0;
+  const room = document.documentElement.scrollHeight - el.offsetTop - el.offsetHeight - 24;
+  el.style.transform = `translateY(${Math.max(0, Math.min(room, head + 8 - top - el.offsetTop))}px)`;
+}
+// The fullscreen timer on a phone inside ProducTVT: the grown frame is taller than the screen, so pin the timer to
+// the part of the app's screen between its header and tab bar and hold the app still (unless real fullscreen took over).
+function placeFocus() {
+  const f = $('focus'), on = f.classList.contains('open') && frame && phone() && !document.fullscreenElement;
+  try { parent.document.documentElement.style.overflow = on ? 'hidden' : ''; } catch {}
+  if (!on) { f.style.top = f.style.height = f.style.bottom = ''; return; }
+  const top = frame.getBoundingClientRect().top, head = parent.document.querySelector('header.sticky')?.getBoundingClientRect().bottom || 0;
+  const nav = parent.document.querySelector('.glass-bar.fixed'), bot = nav ? nav.getBoundingClientRect().top : parent.innerHeight;
+  f.style.top = (head - top) + 'px'; f.style.height = (bot - head) + 'px'; f.style.bottom = 'auto';
+}
+document.addEventListener('fullscreenchange', placeFocus);
+function placeSheet() {
+  const d = $('dlg');
+  if (!frame || !phone()) { d.style.top = ''; return; }
+  const top = frame.getBoundingClientRect().top, nav = parent.document.querySelector('.glass-bar.fixed');
+  const bottom = (nav ? nav.getBoundingClientRect().top : parent.innerHeight) - top;
+  d.style.top = Math.max(0, bottom - d.offsetHeight) + 'px';
+}
+if (frame) {
+  new ResizeObserver(fitFrame).observe(document.body);
+  parent.addEventListener('scroll', stickLive, {passive: true});
+  parent.addEventListener('resize', stickLive);
+}
+phoneMq.addEventListener('change', () => { renderAll(); fitFrame(); stickLive(); });
+$('mLive').onclick = e => {
+  if (e.target.closest('#mStop')) { stop(); save(); renderAll(); return; }
+  $('cats').scrollIntoView({block: 'center', behavior: 'smooth'}); // switch: the chips
+};
+// Swipe the day card or the sessions sideways to change day.
+for (const el of document.querySelectorAll('.area-today,.area-sessions')) {
+  let x0 = 0, y0 = 0;
+  el.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (!phone() || Math.abs(dx) < 60 || Math.abs(dx) < 1.5 * Math.abs(dy)) return;
+    (dx < 0 ? $('next') : $('prev')).click();
+  }, {passive: true});
+}
+try { $('todosBox').open = localStorage.getItem('daytracker.todosOpen') === '1'; } catch {}
+$('todosBox').ontoggle = () => { try { localStorage.setItem('daytracker.todosOpen', $('todosBox').open ? '1' : '0'); } catch {} fitFrame(); };
+for (const h of document.querySelectorAll('.fold > .card-title')) h.onclick = () => { if (phone()) { h.parentElement.classList.toggle('open'); fitFrame(); } };
 
 buildStatic();
 for (const el of [$('donutSegs'), $('totals')]) {

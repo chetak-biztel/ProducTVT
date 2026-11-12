@@ -1,0 +1,7 @@
+{
+  "uuid": "productvt-todos@chetakk",
+  "name": "ProducTVT Todos",
+  "description": "ProducTVT logo in the top bar: one click opens the todo panel from tray/productvt-tray.py.",
+  "shell-version": ["3.36", "3.38"],
+  "version": 1
+}
