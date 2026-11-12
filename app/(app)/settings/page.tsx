@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/page-header";
 import { Avatar } from "@/components/ui/avatar";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
+import { DayToken } from "@/components/settings/day-token";
 import { AppearanceForm } from "@/components/settings/appearance-form";
 
 function roleLabel(role: string) {
@@ -13,7 +14,7 @@ function roleLabel(role: string) {
 export default async function SettingsPage() {
   const user = await requireUser();
   const [record, workspaceDefault] = await Promise.all([
-    prisma.user.findUnique({ where: { id: user.id }, select: { accentColor: true } }),
+    prisma.user.findUnique({ where: { id: user.id }, select: { accentColor: true, dayToken: true } }),
     getAccentColor(),
   ]);
 
@@ -39,6 +40,14 @@ export default async function SettingsPage() {
         <div className="mt-4">
           <AppearanceForm current={record?.accentColor ?? workspaceDefault ?? DEFAULT_ACCENT} hasOverride={!!record?.accentColor} />
         </div>
+      </div>
+
+      <div className="card mb-6 p-5">
+        <h2 className="font-semibold text-[var(--text)]">Day Tracker hub</h2>
+        <p className="mt-1 mb-4 text-sm text-[var(--text-muted)]">
+          The hub on your computer detects what you are doing (browser, VS Code, desktop apps) and sends it here with this token.
+        </p>
+        <DayToken hasToken={!!record?.dayToken} />
       </div>
 
       <div className="card p-5">

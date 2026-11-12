@@ -13,7 +13,9 @@ function isHexColor(v: string | null | undefined): v is string {
 export async function getAccentColor(): Promise<string | null> {
   try {
     const row = await prisma.appSetting.findUnique({ where: { key: "accentColor" } });
-    if (isHexColor(row?.value)) return row.value.trim();
+    // #2563eb was only the seed's default (the old blue theme), never a deliberate pick; treat it as unset
+    // so each theme keeps its own accent (cyan in light).
+    if (isHexColor(row?.value) && row.value.trim().toLowerCase() !== "#2563eb") return row.value.trim();
   } catch {
     // DB not ready — use the theme default so the app still renders.
   }

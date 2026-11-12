@@ -5,13 +5,6 @@ import { seedBoardDefaultsForUser } from "../lib/board-defaults";
 const prisma = new PrismaClient();
 
 async function main() {
-  // ---- App settings ----
-  await prisma.appSetting.upsert({
-    where: { key: "accentColor" },
-    update: {},
-    create: { key: "accentColor", value: "#2563eb" },
-  });
-
   // ---- Founder account ----
   const username = (process.env.SEED_FOUNDER_USERNAME ?? "founder").toLowerCase().trim();
   const password = process.env.SEED_FOUNDER_PASSWORD ?? "ChangeMe123!";

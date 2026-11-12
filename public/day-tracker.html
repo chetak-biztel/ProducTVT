@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>Day Tracker</title>
+<base target="_top">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens: electric cyan on dark slate (default), pastel glass in light ---------- */
+:root{
+  /* Category colours: one palette validated for both themes (lightness band, colour-blind separation).
+     UI chrome uses --accent instead, so the neon cyan never competes with the data. */
+  --work:#0891b2;--study:#7c3aed;--fun:#be123c;--workout:#65a30d;--break:#a16207;
+  --accent:#00f2fe;--danger:#f43f5e;--ok:#10e7a2;--warn:#fbbf24;--icon:#e8f1fb;
+}
+body.theme-dark{
+  --bg-gradient:radial-gradient(at 10% 0%,#1a1c23 0,transparent 55%),radial-gradient(at 90% 10%,#16181e 0,transparent 50%),#101218;  /* same charcoal as the top-bar panel */
+  --blob-1:rgba(255,255,255,.07);--blob-2:rgba(255,255,255,.05);--blob-3:rgba(255,255,255,.04);
+  /* Dark mode is monochrome: white and greys for all UI; colour only marks data and status. */
+  --glass-bg:rgba(20,22,27,.62);--glass-bg-subtle:rgba(28,30,36,.45);--glass-bg-hover:rgba(40,42,50,.72);
+  --glass-border:rgba(255,255,255,.1);--glass-border-bottom:rgba(255,255,255,.05);
+  --glass-shadow:0 20px 45px -12px rgba(0,0,0,.6),0 0 1px 1px rgba(255,255,255,.07) inset;
+  --text-main:#f4f4f5;--text-muted:#a1a1aa;--text-subtle:#71717a;
+  --input-bg:rgba(14,15,19,.7);--input-border:rgba(255,255,255,.14);--progress-track:rgba(255,255,255,.06);
+  --accent:#d4d4d8;--ok:#d4d4d8;--icon:#f4f4f5;--accent-ink:#09090b;
+  --work:#e4e4e7;  /* Work is white in dark mode; the other categories keep their colours */
+}
+body.theme-light{
+  --bg-gradient:radial-gradient(at 0% 0%,#e0f7fa 0,transparent 55%),radial-gradient(at 100% 0%,#e0f2fe 0,transparent 50%),radial-gradient(at 50% 100%,#f0fdf4 0,transparent 55%),#f4f8fb;
+  --blob-1:rgba(0,218,230,.2);--blob-2:rgba(56,189,248,.16);--blob-3:rgba(16,231,162,.14);
+  --glass-bg:rgba(255,255,255,.75);--glass-bg-subtle:rgba(240,249,255,.55);--glass-bg-hover:rgba(255,255,255,.92);
+  --glass-border:rgba(0,170,190,.28);--glass-border-bottom:rgba(186,230,253,.7);
+  --glass-shadow:0 20px 40px -15px rgba(12,74,110,.1),0 0 1px 1px rgba(255,255,255,.9) inset;
+  --text-main:#082f49;--text-muted:#0369a1;--text-subtle:#64748b;
+  --input-bg:rgba(255,255,255,.85);--input-border:rgba(125,200,240,.9);--progress-track:rgba(224,242,254,.8);
+  --accent:#0891b2;--danger:#e11d48;--ok:#059669;--warn:#d97706;--icon:#0f2233;
+  --accent-ink:#fff;
+}
+
+/* ---------- foundations ---------- */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg-gradient);background-attachment:fixed;
+  color:var(--text-main);min-height:100vh;line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.muted{color:var(--text-muted)}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+
+.ambient-blobs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.blob-1{width:55vw;height:55vw;max-width:650px;max-height:650px;top:-12%;left:-8%;background:var(--blob-1);animation:floatBlob1 25s ease-in-out infinite alternate}
+.blob-2{width:45vw;height:45vw;max-width:550px;max-height:550px;top:25%;right:-8%;background:var(--blob-2);animation:floatBlob2 28s ease-in-out infinite alternate}
+.blob-3{width:40vw;height:40vw;max-width:500px;max-height:500px;bottom:-10%;left:25%;background:var(--blob-3);animation:floatBlob3 22s ease-in-out infinite alternate}
+@keyframes floatBlob1{50%{transform:translate(50px,35px) scale(1.06)}100%{transform:translate(-25px,60px) scale(.96)}}
+@keyframes floatBlob2{50%{transform:translate(-55px,-45px) scale(1.08)}100%{transform:translate(35px,50px) scale(.94)}}
+@keyframes floatBlob3{50%{transform:translate(45px,-50px) scale(1.05)}100%{transform:translate(-40px,25px) scale(.95)}}
+/* nothing to see behind the fullscreen timer, so don't spend the GPU on it */
+body:has(#focus.open) .blob{animation-play-state:paused}
+
+.app-container{position:relative;z-index:1;max-width:2000px;margin:0 auto;padding:0 0 24px}
+.dash{display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+@media (min-width:1100px){
+  .dash{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"timer today" "sessions week" "trend streak" "todos todos" "settings settings"}
+  .area-timer{grid-area:timer}.area-today{grid-area:today}.area-sessions{grid-area:sessions}.area-week{grid-area:week}.area-trend{grid-area:trend}.area-streak{grid-area:streak}.area-settings{grid-area:settings}.area-todos{grid-area:todos}
+  .area-sessions #entries{max-height:560px;overflow-y:auto;padding-right:4px}
+}
+.glass-surface{background:var(--glass-bg);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
+  border:1px solid var(--glass-border);border-bottom-color:var(--glass-border-bottom);border-radius:24px;box-shadow:var(--glass-shadow)}
+.card-pad{padding:28px}
+.v-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:16px;height:16px}
+svg.i,.v-icon svg,.ico svg{width:100%;height:100%;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- header ---------- */
+/* Header: no bar, just the mark, the date and today's total. */
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px;padding:4px 6px}
+.brand-wrapper{display:flex;align-items:center;gap:14px}
+.header-actions{display:flex;align-items:center;gap:18px}
+.brand-mark{width:40px;height:40px;color:var(--text-main);flex:none}
+.brand-mark svg{width:100%;height:100%;display:block}
+header h1{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.brand-date{font-size:13px;font-weight:500;color:var(--text-muted)}
+.head-stat{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15}
+.head-label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-subtle)}
+.head-val{font:700 20px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.head-sep{width:1px;height:32px;background:var(--glass-border)}
+#hubState{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;padding:6px 14px;border-radius:999px;
+  background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
+#hubState:empty{display:none}
+#hubState::before{content:"●";font-size:9px;animation:pulseDot 2s infinite ease-in-out}
+#hubState.off{background:rgba(244,63,94,.15);color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+.theme-btn{background:transparent;border:1px solid var(--glass-border);padding:9px 11px;border-radius:999px;color:var(--text-muted);display:inline-flex;transition:all .15s ease}
+.theme-btn:hover{background:var(--glass-bg-hover);color:var(--accent);border-color:var(--accent)}
+
+/* ---------- timer card ---------- */
+#cats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+.cat{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:18px 12px;min-height:90px;border-radius:16px;
+  background:var(--glass-bg-subtle);border:1px solid var(--glass-border);transition:all .22s cubic-bezier(.16,1,.3,1)}
+.cat:hover{background:var(--glass-bg-hover);transform:translateY(-2px);border-color:color-mix(in srgb,var(--c) 50%,transparent);box-shadow:0 10px 24px -6px rgba(0,0,0,.35)}
+.cat .ico{width:24px;height:24px;display:inline-flex;color:var(--icon);transition:transform .2s ease}
+.cat:hover .ico{transform:scale(1.12)}
+.cat .nm{font-size:13px;font-weight:700;letter-spacing:-.01em}
+.cat .t{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-muted)}
+.cat.on{background:color-mix(in srgb,var(--c) 14%,var(--glass-bg));border-color:var(--c);transform:translateY(-2px);
+  box-shadow:0 0 24px color-mix(in srgb,var(--c) 35%,transparent),0 8px 18px -4px color-mix(in srgb,var(--c) 25%,transparent),0 0 0 1px var(--c) inset}
+.cat.on::after{content:"";position:absolute;top:9px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);animation:pulseDot 1.5s infinite}
+
+#banner{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.35);
+  padding:14px 20px;border-radius:16px;margin-bottom:20px;box-shadow:0 8px 24px -6px rgba(251,191,36,.15)}
+#banner.show{display:flex}
+.banner-content{display:flex;align-items:center;gap:12px;font-weight:600;font-size:14px}
+.banner-content .v-icon{width:20px;height:20px;color:var(--warn);filter:drop-shadow(0 0 6px rgba(251,191,36,.5))}
+.banner-actions{display:flex;align-items:center;gap:8px}
+.btn-banner{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;border:none;transition:all .15s ease}
+#takeBreak{background:#fbbf24;color:#0f172a;box-shadow:0 0 14px rgba(251,191,36,.4)}
+#takeBreak:hover{filter:brightness(1.1);transform:translateY(-1px)}
+#dismiss{background:transparent;color:var(--text-muted)}
+#dismiss:hover{color:var(--text-main)}
+
+#now{--c:var(--text-subtle);background:var(--glass-bg-subtle);border:1px solid var(--glass-border);border-radius:16px;padding:24px 28px;display:flex;flex-direction:column;gap:14px;
+  box-shadow:0 0 24px color-mix(in srgb,var(--c) 22%,transparent),0 8px 30px -10px rgba(0,0,0,.4);transition:box-shadow .3s ease}
+.now-header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.now-category{display:flex;align-items:center;gap:10px;min-width:0}
+.now-label{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.now-since{font-size:13px;color:var(--text-muted)}
+.now-empty{color:var(--text-muted);text-align:center;padding:10px 0}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--c,var(--accent));box-shadow:0 0 10px var(--c,var(--accent));flex:none;display:inline-block}
+.tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:6px;
+  background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+#now .clock{font-family:'JetBrains Mono',monospace;font-size:54px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.03em;text-align:center;line-height:1.15;
+  text-shadow:0 0 28px color-mix(in srgb,var(--c) 45%,transparent),0 4px 14px rgba(0,0,0,.35)}
+.now-controls{display:flex;align-items:center;gap:12px}
+#note{flex:1;min-width:0;background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;padding:12px 16px;font-size:14px;outline:none;transition:all .2s ease}
+#note:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+#stop{background:var(--danger);color:#fff;border:none;padding:12px 24px;border-radius:12px;font-weight:700;font-size:14px;white-space:nowrap;
+  box-shadow:0 0 18px rgba(244,63,94,.45);transition:all .2s ease}
+#stop:hover{filter:brightness(.92);transform:translateY(-1px)}
+.timer-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;font-size:13px;color:var(--text-subtle)}
+.pill-btn{background:transparent;border:1px solid var(--glass-border);color:var(--text-muted);padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;
+  display:inline-flex;align-items:center;gap:8px;transition:all .2s ease}
+.pill-btn:hover{color:var(--accent);background:var(--glass-bg-hover);border-color:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 25%,transparent)}
+
+/* ---------- day card ---------- */
+.day-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--glass-border)}
+.day-nav-group{display:flex;align-items:center;gap:8px}
+.nav-btn{background:var(--glass-bg-subtle);border:1px solid var(--glass-border);padding:8px 14px;min-height:40px;border-radius:10px;font-weight:600;font-size:14px;
+  display:inline-flex;align-items:center;justify-content:center;transition:all .15s ease}
+.nav-btn:hover:not(:disabled){background:var(--glass-bg-hover);border-color:var(--accent);color:var(--accent)}
+.nav-btn:disabled{opacity:.35;cursor:default}
+#dayTitle{font-size:18px;font-weight:700;letter-spacing:-.01em;margin:0 8px}
+
+.today-body{display:flex;align-items:center;gap:36px;margin-bottom:28px}
+.donut-wrap{position:relative;width:240px;height:240px;flex:none}
+#donut{width:100%;height:100%;display:block}
+.donut-track{fill:none;stroke:var(--progress-track);stroke-width:28}
+#donutSegs circle{fill:none;stroke-width:28;cursor:pointer;transition:stroke-dasharray .4s ease,stroke-dashoffset .4s ease,opacity .15s ease}
+#donutSegs circle.dim{opacity:.25}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:0 50px}
+.donut-total{font:700 30px/1.1 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.donut-sub{font-size:12px;font-weight:600;color:var(--text-muted);margin-top:4px}
+#totals{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.tot{display:grid;grid-template-columns:10px 18px 1fr auto;column-gap:10px;row-gap:1px;align-items:center;padding:8px 12px;border-radius:12px;border:1px solid transparent;cursor:default;transition:background .15s ease,border-color .15s ease}
+.tot:hover,.tot.hl{background:var(--glass-bg-subtle);border-color:var(--glass-border)}
+.tot .v-icon{color:var(--icon)}
+.tot-name{font-size:14px;font-weight:700}
+.tot .val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tot .goal{grid-column:3 / 5;font-size:12px;color:var(--text-muted)}
+.tot .goal:empty{display:none}
+.tot.met .goal::before{content:"✓ ";color:var(--ok);font-weight:800}
+.tot.over{background:color-mix(in srgb,var(--danger) 9%,transparent);border-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+.tot.over .goal{color:var(--danger);font-weight:700}
+.tot.over .goal::before{content:"⚠ "}
+.timeline-container{margin-bottom:28px}
+.timeline-header{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-subtle);margin-bottom:8px;font-family:'JetBrains Mono',monospace}
+#timeline{position:relative;height:28px;border-radius:10px;background:var(--progress-track);overflow:hidden;border:1px solid var(--glass-border);box-shadow:inset 0 2px 6px rgba(0,0,0,.35)}
+#timeline i{position:absolute;top:0;height:100%;background:var(--c);opacity:.9;box-shadow:0 0 10px var(--c);transition:opacity .15s ease}
+#timeline i:hover{opacity:1;filter:brightness(1.25)}
+
+.entries-title{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-bottom:14px}
+#entries{list-style:none;display:flex;flex-direction:column;gap:8px}
+#entries li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:12px;background:var(--glass-bg-subtle);
+  border:1px solid var(--glass-border);cursor:pointer;transition:all .18s ease}
+#entries li:hover{background:var(--glass-bg-hover);transform:translateX(4px);border-color:var(--accent);box-shadow:0 4px 18px -4px color-mix(in srgb,var(--accent) 18%,transparent)}
+#entries li.empty{cursor:default;color:var(--text-muted);justify-content:center}
+.todo-cols{display:grid;gap:24px}
+@media(min-width:900px){.todo-cols{grid-template-columns:1fr 1fr}}
+.todo-cols h4{font-size:14px;font-weight:700;margin-bottom:10px}
+.todo-add{display:flex;gap:8px;margin-bottom:12px}.todo-add .field{flex:1;min-width:0}
+.todo-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.todo-list li{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;background:var(--glass-bg-subtle);border:1px solid var(--glass-border)}
+.todo-list li .what{flex:1;min-width:0;overflow-wrap:anywhere}
+.todo-list li.done .what{text-decoration:line-through;color:var(--text-muted)}
+.todo-list li.empty{color:var(--text-muted);justify-content:center}
+.todo-list .x{background:none;border:0;color:var(--text-muted);cursor:pointer;font-size:18px;line-height:1;padding:0 4px}
+.todo-list .x:hover{color:var(--danger)}
+#entries li.empty:hover{transform:none;border-color:var(--glass-border);box-shadow:none;background:var(--glass-bg-subtle)}
+.entry-left{display:flex;align-items:center;gap:12px;min-width:0}
+.when{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);white-space:nowrap}
+.what{font-size:14px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.what .muted{font-weight:500}
+.dur{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;white-space:nowrap}
+
+/* ---------- week card ---------- */
+.card-title{font-size:18px;font-weight:700;margin-bottom:20px}
+#week{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;height:180px;align-items:end;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--glass-border)}
+.wcol{display:flex;flex-direction:column;height:100%;justify-content:flex-end;cursor:pointer;padding:4px;border-radius:8px;transition:background .15s ease}
+.wcol:hover{background:var(--glass-bg-subtle)}
+.wcol.sel{background:color-mix(in srgb,var(--accent) 8%,transparent);outline:2px solid var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 25%,transparent)}
+.stack{display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:var(--progress-track);min-height:2px}
+.stack i{display:block;background:var(--c);transition:height .3s ease}
+#wlab{display:grid;grid-template-columns:repeat(7,1fr);gap:12px;text-align:center;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:24px}
+#wtable{width:100%;border-collapse:separate;border-spacing:0;border-radius:12px;overflow:hidden;border:1px solid var(--glass-border);font-size:13px}
+#wtable th,#wtable td{padding:12px 16px;text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+#wtable th:first-child,#wtable td:first-child{text-align:left;font-family:inherit}
+#wtable th{background:var(--glass-bg-subtle);color:var(--text-muted);font-weight:700;border-bottom:1px solid var(--glass-border)}
+#wtable tr:not(:last-child) td{border-bottom:1px solid var(--glass-border)}
+.tbl-cat-cell{display:flex;align-items:center;gap:10px;font-weight:600}
+/* this week vs last week */
+.table-wrap{overflow-x:auto}
+#trend{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+#trend th,#trend td{padding:11px 8px;text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;border-bottom:1px solid var(--glass-border);white-space:nowrap}
+#trend th:first-child,#trend td:first-child{text-align:left;font-family:inherit}
+#trend th{color:var(--text-muted);font-weight:700}
+#trend tr:last-child td{border-bottom:none}
+#trend .chg{color:var(--text-muted)}
+.wg{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.wg .bar-mini{width:72px;height:6px;border-radius:3px;background:var(--progress-track);overflow:hidden}
+.wg .bar-mini i{display:block;height:100%;background:var(--c)}
+.wg.over{color:var(--danger)}
+.wg.over .bar-mini i{background:var(--danger)}
+.wg.met::before{content:"✓";color:var(--ok);font-weight:800}
+/* study streak heatmap: one hue, light to dark */
+.streak-head{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;margin-bottom:18px}
+.streak-num{font:800 30px/1.1 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.streak-num.sm{font-size:20px}
+.streak-sub{font-size:12px;color:var(--text-muted);margin-top:4px}
+#heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,14px);grid-auto-columns:14px;gap:4px;overflow-x:auto;padding:2px}
+#heat i,.heat-legend i{display:block;border-radius:3px;background:var(--progress-track)}
+#heat i.l1,.heat-legend i.l1{background:color-mix(in srgb,var(--study) 30%,var(--progress-track))}
+#heat i.l2,.heat-legend i.l2{background:color-mix(in srgb,var(--study) 55%,var(--progress-track))}
+#heat i.l3,.heat-legend i.l3{background:color-mix(in srgb,var(--study) 80%,var(--progress-track))}
+#heat i.l4,.heat-legend i.l4{background:var(--study)}
+#heat i.today{outline:1.5px solid var(--text-muted);outline-offset:1px}
+#heat i.future{visibility:hidden}
+.heat-legend{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);margin-top:12px}
+.heat-legend i{width:11px;height:11px}
+.tbl-cat-cell .v-icon,.goal-item .v-icon{color:var(--icon)}
+
+/* ---------- settings ---------- */
+details.settings-box{background:var(--glass-bg-subtle);border:1px solid var(--glass-border);border-radius:24px;padding:20px 24px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+details.settings-box summary{font-weight:700;font-size:16px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;user-select:none}
+details.settings-box summary::-webkit-details-marker{display:none}
+details.settings-box summary::after{content:"▾";font-size:18px;color:var(--accent);transition:transform .2s ease}
+details[open] summary::after{transform:rotate(180deg)}
+.settings-content{margin-top:20px;display:flex;flex-direction:column;gap:20px;padding-top:20px;border-top:1px solid var(--glass-border)}
+.settings-content h4{font-size:14px;font-weight:700}
+#goals{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.goal-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--glass-bg);padding:10px 14px;border-radius:10px;border:1px solid var(--glass-border)}
+.goal-item label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.goal-inputs{display:flex;align-items:center;gap:6px}
+.field{padding:7px 10px;border-radius:8px;border:1px solid var(--input-border);background:var(--input-bg);font-size:13px;outline:none}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+input.field[type=number]{width:80px;text-align:right;font-family:'JetBrains Mono',monospace}
+.settings-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.settings-row label{font-size:13px;font-weight:600}
+.action-buttons{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn-secondary{background:var(--glass-bg);border:1px solid var(--glass-border);padding:8px 16px;min-height:40px;border-radius:10px;font-weight:600;font-size:13px;
+  display:inline-flex;align-items:center;gap:8px;transition:all .15s ease}
+.btn-secondary:hover:not(:disabled){background:var(--glass-bg-hover);border-color:var(--accent);color:var(--accent)}
+.btn-secondary:disabled{opacity:.6;cursor:default}
+.settings-note{font-size:12px;color:var(--text-subtle)}
+
+/* ---------- edit dialog ---------- */
+dialog#dlg{border:1px solid var(--glass-border);border-radius:28px;background:var(--glass-bg);backdrop-filter:blur(32px) saturate(190%);-webkit-backdrop-filter:blur(32px) saturate(190%);
+  box-shadow:0 30px 60px -15px rgba(0,0,0,.7),0 0 1px 1px color-mix(in srgb,var(--accent) 30%,transparent) inset;color:var(--text-main);max-width:480px;width:calc(100% - 32px);margin:auto;padding:0}
+dialog#dlg::backdrop{background:rgba(8,12,20,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#dlgForm{padding:32px;display:flex;flex-direction:column;gap:18px}
+#dlgTitle{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.form-group{display:flex;flex-direction:column;gap:8px}
+.form-group label{font-size:13px;font-weight:600;color:var(--text-muted)}
+.form-group input,.form-group select{background:var(--input-bg);border:1px solid var(--input-border);border-radius:12px;padding:12px 14px;font-size:14px;outline:none}
+.form-group input:focus,.form-group select:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+select option{background:#0d1626;color:#f0f9ff}
+body.theme-light select option{background:#fff;color:#082f49}
+#fErr{color:var(--danger);font-size:13px;font-weight:600;min-height:18px}
+.dlg-actions{display:flex;align-items:center;justify-content:space-between}
+.dlg-right-actions{display:flex;align-items:center;gap:10px}
+#fDel{background:transparent;color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent);padding:10px 18px;border-radius:12px;font-weight:700;transition:all .15s ease}
+#fDel:hover{background:rgba(244,63,94,.12);border-color:var(--danger)}
+#fCancel{background:transparent;color:var(--text-muted);border:none;padding:10px 18px;font-weight:600}
+#fCancel:hover{color:var(--text-main)}
+#fSave{background:var(--accent);color:var(--accent-ink);border:none;padding:10px 22px;border-radius:12px;font-weight:800;box-shadow:0 0 18px color-mix(in srgb,var(--accent) 40%,transparent);transition:all .15s ease}
+#fSave:hover{filter:brightness(1.12);transform:translateY(-1px)}
+
+/* ---------- fullscreen focus timer ----------
+   Always dark, tinted by the current category. No backdrop blur: it would re-blur the whole screen every frame. */
+#focus{--c:var(--accent);--text-main:#f0f9ff;--text-muted:#94a3b8;--glass-bg:rgba(20,22,27,.7);--glass-bg-subtle:rgba(28,30,36,.55);--glass-bg-hover:rgba(40,42,50,.8);--glass-border:rgba(255,255,255,.12);
+  display:none;position:fixed;inset:0;z-index:999;flex-direction:column;align-items:center;justify-content:space-between;padding:32px 24px;color:var(--text-main);user-select:none;-webkit-user-select:none;
+  background:radial-gradient(ellipse at 50% 45%,color-mix(in srgb,var(--c) 20%,transparent) 0,transparent 60%),radial-gradient(at 10% 0%,#1a1c23 0,transparent 55%),#0c0d12;transition:background .6s ease}
+#focus.open{display:flex}
+body.theme-light #focus{--accent:#00f2fe;--icon:#e8f1fb}
+.focus-header{width:100%;max-width:900px;display:flex;align-items:center;justify-content:space-between}
+.focus-brand{font-weight:700;font-size:13px;color:var(--text-muted);letter-spacing:.12em;text-transform:uppercase}
+.close-focus{background:var(--glass-bg-subtle);border:1px solid var(--glass-border);width:40px;height:40px;border-radius:50%;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s ease}
+.close-focus:hover{background:var(--glass-bg-hover);border-color:var(--text-muted);transform:scale(1.08)}
+.focus-center{display:flex;flex-direction:column;align-items:center;gap:24px;text-align:center}
+#fCats{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+#fCats button{background:var(--glass-bg-subtle);border:1px solid var(--glass-border);padding:9px 18px;border-radius:999px;font-size:14px;font-weight:700;
+  display:inline-flex;align-items:center;gap:8px;transition:all .2s cubic-bezier(.16,1,.3,1)}
+#fCats button .v-icon{color:var(--icon)}
+#fCats button kbd{font:600 11px 'JetBrains Mono',monospace;color:var(--text-muted)}
+#fCats button:hover{background:var(--glass-bg-hover);transform:translateY(-2px);border-color:var(--c)}
+#fCats button.on{background:color-mix(in srgb,var(--c) 22%,var(--glass-bg));border-color:var(--c);transform:scale(1.06);
+  box-shadow:0 0 30px color-mix(in srgb,var(--c) 50%,transparent),0 0 0 1px var(--c) inset}
+#fClock{font-family:'JetBrains Mono',monospace;font-size:min(22vw,34vh);font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.04em;line-height:1;white-space:nowrap;color:#fff;
+  text-shadow:0 0 45px color-mix(in srgb,var(--c) 45%,transparent),0 10px 40px rgba(0,0,0,.7)}
+#fClock.long{font-size:min(16vw,30vh)}
+#fClock .ed{color:var(--c);animation:blinkEdit 1s infinite alternate}
+@keyframes blinkEdit{from{opacity:1}to{opacity:.3}}
+#fHint{font-size:15px;color:var(--text-muted);font-weight:500;max-width:520px;padding:0 8px}
+.tips{list-style:none;width:100%;max-width:880px;display:flex;align-items:center;justify-content:center;gap:6px 18px;flex-wrap:wrap;padding:12px 22px;border-radius:24px;
+  background:var(--glass-bg-subtle);border:1px solid var(--glass-border);color:var(--text-muted);font-size:13px;font-weight:500}
+.tips li{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.tips li>button{min-width:26px;padding:2px 7px;border-radius:6px;background:var(--glass-bg);border:1px solid var(--glass-border);font:700 11px 'JetBrains Mono',monospace;color:var(--text-main);transition:all .15s ease}
+.tips li>button:hover{border-color:var(--text-muted)}
+.tips span button{background:none;border:0;padding:0;color:inherit;font-size:inherit;text-decoration:underline}
+@media (max-height:560px){.tips{display:none}}
+
+/* ---------- responsive / accessibility ---------- */
+@media (max-width:768px){#cats{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:760px){.today-body{flex-direction:column;align-items:stretch;gap:20px}.donut-wrap{margin:0 auto}}
+@media (max-width:640px){
+  .head-stat,.head-sep{display:none}
+  .app-container{padding:0 0 24px}
+  .card-pad{padding:20px}
+  header{padding:10px 14px}
+  #now{padding:20px}
+  #now .clock{font-size:40px}
+  #goals{grid-template-columns:1fr}
+  .app-container{padding:0 0 24px}
+  .when{display:none}
+  .now-controls{flex-wrap:wrap}
+  #note{flex-basis:100%}
+  #stop{flex:1}
+}
+@media (max-width:480px){#cats{grid-template-columns:repeat(2,1fr)}#week,#wlab{gap:6px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  body.theme-dark .glass-surface,body.theme-dark details.settings-box,body.theme-dark dialog#dlg{background:rgba(13,22,38,.96)}
+  body.theme-light .glass-surface,body.theme-light details.settings-box,body.theme-light dialog#dlg{background:rgba(255,255,255,.97)}
+}
+/* Embedded in ProducTVT: its sidebar has the brand and theme toggle, its background shows through. */
+body{background:transparent!important}
+.ambient-blobs,.brand-mark,#themeToggle,#hubState.off:empty{display:none!important}
+</style>
+</head>
+<body class="theme-dark">
+<script>
+  // Pick the theme before anything paints, so there's no dark-to-light flash.
+  var t = (function(){ try { return parent.document.documentElement.dataset.theme; } catch (e) {} })();
+  document.body.className = 'theme-' + (t || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+</script>
+<div class="ambient-blobs" aria-hidden="true"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="ico-work"><rect height="14" rx="2" width="20" x="2" y="7"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></g>
+    <g id="ico-study"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></g>
+    <g id="ico-fun"><path d="M6 12h4M8 10v4M15 13h.01M18 11h.01"/><rect height="12" rx="6" width="20" x="2" y="6"/></g>
+    <g id="ico-workout"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></g>
+    <g id="ico-break"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><path d="M6 2v2M10 2v2M14 2v2"/></g>
+    <g id="ico-bell"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></g>
+    <g id="ico-expand"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></g>
+    <g id="ico-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>
+    <g id="ico-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g>
+  </defs>
+</svg>
+
+<div class="app-container">
+  <header>
+    <div class="brand-wrapper">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-linecap="round">
+          <circle cx="20" cy="20" r="15" stroke-width="5" opacity=".18"/>
+          <path d="M20 5a15 15 0 0 1 13.6 21.3" stroke-width="5"/>
+          <path d="M28.8 32.1A15 15 0 0 1 8 29" stroke-width="5" opacity=".6"/>
+          <circle cx="20" cy="20" r="2.6" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <div><h1>Day Tracker</h1><div class="brand-date" id="headDate"></div></div>
+    </div>
+    <div class="header-actions">
+      <div class="head-stat"><span class="head-label">Tracked today</span><span class="head-val" id="headTotal">0m</span></div>
+      <span class="head-sep" aria-hidden="true"></span>
+      <span id="hubState"></span>
+      <button class="theme-btn" id="themeToggle" title="Toggle light/dark" aria-label="Toggle light/dark">
+        <span class="v-icon"><svg viewBox="0 0 24 24"><use id="themeIcon" href="#ico-sun"/></svg></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="dash">
+    <section class="glass-surface card-pad area-timer">
+      <div id="cats"></div>
+      <div id="banner">
+        <div class="banner-content">
+          <span class="v-icon"><svg viewBox="0 0 24 24"><use href="#ico-break"/></svg></span>
+          <span>You've been going a while. Take a break?</span>
+        </div>
+        <div class="banner-actions">
+          <button class="btn-banner" id="takeBreak">Start break</button>
+          <button class="btn-banner" id="dismiss">Later</button>
+        </div>
+      </div>
+      <div id="now"></div>
+      <div class="timer-footer">
+        <span>Tip: press F for the fullscreen timer</span>
+        <button class="pill-btn" id="openFocus">
+          <span class="v-icon"><svg viewBox="0 0 24 24"><use href="#ico-expand"/></svg></span>Fullscreen timer
+        </button>
+      </div>
+    </section>
+
+    <section class="glass-surface card-pad area-today">
+      <div class="day-nav">
+        <div class="day-nav-group">
+          <button class="nav-btn" id="prev" aria-label="Previous day"><span class="v-icon"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></span></button>
+          <span id="dayTitle"></span>
+          <button class="nav-btn" id="next" aria-label="Next day"><span class="v-icon"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></span></button>
+        </div>
+        <div class="day-nav-group">
+          <button class="nav-btn" id="today">Today</button>
+          <button class="nav-btn" id="add">+ Add session</button>
+        </div>
+      </div>
+      <div class="today-body">
+        <div class="donut-wrap">
+          <svg id="donut" viewBox="0 0 200 200" role="img" aria-label="Time by category">
+            <circle class="donut-track" cx="100" cy="100" r="80"/>
+            <g id="donutSegs" transform="rotate(-90 100 100)"></g>
+          </svg>
+          <div class="donut-center"><div class="donut-total" id="donutTotal"></div><div class="donut-sub" id="donutSub"></div></div>
+        </div>
+        <div id="totals"></div>
+      </div>
+      <div class="timeline-container">
+        <div class="timeline-header"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        <div id="timeline"></div>
+      </div>
+    </section>
+
+    <section class="glass-surface card-pad area-sessions">
+      <div class="entries-title" id="sessTitle">Sessions</div>
+      <ul id="entries"></ul>
+    </section>
+
+    <section class="glass-surface card-pad area-week">
+      <h3 class="card-title">Last 7 days</h3>
+      <div id="week"></div>
+      <div id="wlab"></div>
+      <table id="wtable"></table>
+    </section>
+
+    <section class="glass-surface card-pad area-trend">
+      <h3 class="card-title">This week vs last week</h3>
+      <div class="table-wrap"><table id="trend"></table></div>
+      <p class="settings-note" style="margin-top:12px">Weeks start on Monday. Last week is counted up to the same day and time.</p>
+    </section>
+
+    <section class="glass-surface card-pad area-streak">
+      <h3 class="card-title">Study streak</h3>
+      <div class="streak-head" id="streakHead"></div>
+      <div id="heat" role="img" aria-label="Study time per day"></div>
+      <div class="heat-legend">Less <i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i> More</div>
+    </section>
+
+    <section class="glass-surface card-pad area-todos">
+      <h3 class="card-title">Todos &amp; reminders</h3>
+      <div class="todo-cols">
+        <div>
+          <form class="todo-add" id="todoForm"><input class="field" id="todoText" placeholder="Add a todo" maxlength="200" aria-label="New todo"><button class="nav-btn">Add</button></form>
+          <ul class="todo-list" id="todos"></ul>
+        </div>
+        <div>
+          <form class="todo-add" id="remForm"><input class="field" id="remText" placeholder="Remind me to…" maxlength="200" aria-label="Reminder"><input class="field" id="remAt" type="datetime-local" aria-label="When" required><button class="nav-btn">Set</button></form>
+          <ul class="todo-list" id="reminders"></ul>
+        </div>
+      </div>
+    </section>
+
+    <details class="settings-box area-settings">
+      <summary>Settings &amp; data</summary>
+      <div class="settings-content">
+        <h4>Daily goals (minutes)</h4>
+        <div id="goals"></div>
+        <h4>Weekly goals (hours)</h4>
+        <div id="wgoals"></div>
+        <div class="settings-row">
+          <label for="summaryAt">Daily summary notification at (clear it to turn off)</label>
+          <input class="field" id="summaryAt" type="time">
+        </div>
+        <div class="settings-row">
+          <label for="breakAfter">Remind me to take a break after this many minutes of work or study (0 = off)</label>
+          <input class="field" id="breakAfter" type="number" min="0" step="5">
+        </div>
+        <div class="settings-row">
+          <button class="btn-secondary" id="notif"><span class="v-icon"><svg viewBox="0 0 24 24"><use href="#ico-bell"/></svg></span>Turn on notifications</button>
+          <div class="action-buttons">
+            <button class="btn-secondary" id="exportJson">Export JSON</button>
+            <button class="btn-secondary" id="exportCsv">Export CSV</button>
+            <button class="btn-secondary" id="importBtn">Import JSON</button>
+            <input type="file" id="importFile" accept="application/json" hidden>
+          </div>
+        </div>
+        <p class="settings-note">Export a backup now and then.</p>
+      </div>
+    </details>
+  </main>
+</div>
+
+<div id="focus" role="dialog" aria-label="Fullscreen timer">
+  <div class="focus-header">
+    <span class="focus-brand">Focus mode</span>
+    <button class="close-focus" data-k="Escape" aria-label="Close" title="Close (Esc)">✕</button>
+  </div>
+  <div class="focus-center">
+    <div id="fCats"></div>
+    <div id="fClock" title="Double-click for fullscreen"></div>
+    <div id="fHint"></div>
+  </div>
+  <ul class="tips">
+    <li><button data-k=" ">Space</button><span id="fGo"></span></li>
+    <li><button data-k="1">1</button>…<button data-k="5">5</button> category</li>
+    <li><button data-k="s">S</button><span id="fMode"></span></li>
+    <li><button data-k="ArrowLeft">←</button><button data-k="ArrowRight">→</button><button data-k="ArrowUp">↑</button><button data-k="ArrowDown">↓</button> edit countdown</li>
+    <li><button data-k="r">R</button> reset</li>
+    <li><button data-k="f">F</button><span id="fFs"></span></li>
+    <li><button data-k="Escape">Esc</button> close</li>
+  </ul>
+</div>
+
+<dialog id="dlg">
+  <form method="dialog" id="dlgForm">
+    <div id="dlgTitle">Edit entry</div>
+    <div class="form-group"><label for="fCat">Category</label><select id="fCat"></select></div>
+    <div class="form-group"><label for="fStart">Start</label><input id="fStart" type="datetime-local" required></div>
+    <div class="form-group"><label for="fEnd">End</label><input id="fEnd" type="datetime-local" required></div>
+    <div class="form-group"><label for="fNote">Note</label><input id="fNote" type="text" placeholder="optional"></div>
+    <div id="fErr"></div>
+    <div class="dlg-actions">
+      <button type="button" id="fDel">Delete</button>
+      <div class="dlg-right-actions">
+        <button id="fCancel" value="cancel" formnovalidate>Cancel</button>
+        <button id="fSave" value="save">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const CATS = [
+  {id:'work',    label:'Work',          icon:'💼'},
+  {id:'study',   label:'Study',         icon:'📚'},
+  {id:'fun',     label:'Entertainment', icon:'🎮'},
+  {id:'workout', label:'Workout',       icon:'🏋️'},
+  {id:'break',   label:'Break',         icon:'☕'},
+];
+const CAT = Object.fromEntries(CATS.map(c => [c.id, c]));
+const ico = id => `<svg viewBox="0 0 24 24"><use href="#ico-${id}"/></svg>`;
+const FOCUS_CATS = ['work', 'study'];
+const KEY = 'daytracker.v1';
+const DEFAULTS = {
+  entries: [],
+  active: null,
+  goals: {
+    work:    {mins: 480, kind: 'min'},
+    study:   {mins: 120, kind: 'min'},
+    fun:     {mins: 90,  kind: 'max'},
+    workout: {mins: 45,  kind: 'min'},
+    break:   {mins: 0,   kind: 'min'},
+  },
+  breakAfter: 50,
+  focus: {cat: 'study', mode: 'stopwatch', secs: 25 * 60},
+  weeklyGoals: {
+    work:    {mins: 0,       kind: 'min'},
+    study:   {mins: 14 * 60, kind: 'min'},
+    fun:     {mins: 0,       kind: 'max'},
+    workout: {mins: 0,       kind: 'min'},
+    break:   {mins: 0,       kind: 'min'},
+  },
+  summaryAt: '22:00',
+  todos: [],      // not stored here: they are ProducTVT's Todo rows (/api/day/todos)
+  reminders: [],  // {id, text, at, fired}; the page chimes when one is due, JARVIS says it
+};
+const MIN = 60000, DAY_FMT = {weekday: 'long', month: 'short', day: 'numeric'};
+
+// ---------- state ----------
+// Served by the hub (hub/server.mjs) the data lives there, shared with the activity extensions.
+// Opened as a plain file it lives in this browser's localStorage.
+const PAGE_FIELDS = ['entries', 'active', 'goals', 'breakAfter', 'focus', 'weeklyGoals', 'summaryAt', 'reminders'];
+function normalize(s) {
+  const base = structuredClone(DEFAULTS);
+  return s ? {...base, ...s, goals: {...base.goals, ...s.goals}, focus: {...base.focus, ...s.focus}, weeklyGoals: {...base.weeklyGoals, ...s.weeklyGoals}} : base;
+}
+function load() {
+  try { return normalize(JSON.parse(localStorage.getItem(KEY))); } catch { return normalize(null); }
+}
+// rev, autoEntries and auto come from the hub; auto is the session the extensions are detecting right now.
+let S = {...load(), rev: 0, autoEntries: [], auto: null};
+const hub = {on: false, online: false, dirty: false, busy: false, timer: 0, last: ''};
+
+function save() {
+  if (!hub.on) { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} return; }
+  hub.dirty = true;
+  clearTimeout(hub.timer);
+  hub.timer = setTimeout(push, 300); // the note field saves on every keystroke
+}
+async function api(method, path, body) {
+  const r = await fetch(path, {method, headers: body ? {'Content-Type': 'application/json'} : {}, body: body && JSON.stringify(body)});
+  return {status: r.status, data: await r.json().catch(() => null)};
+}
+async function push() {
+  if (hub.busy) return; // the running push picks up the change when it finishes
+  hub.busy = true; hub.dirty = false;
+  try {
+    const r = await api('PUT', '/api/day/state', {rev: S.rev, state: Object.fromEntries(PAGE_FIELDS.map(k => [k, S[k]]))});
+    if (r.status === 200) S.rev = r.data.rev;
+    else if (r.status === 409) { applyRemote(r.data); renderAll(); } // lost a race, usually auto-detection stopping the timer
+    hub.online = true;
+  } catch { hub.dirty = true; hub.online = false; }
+  finally { hub.busy = false; }
+  if (hub.dirty) hub.timer = setTimeout(push, hub.online ? 0 : 3000);
+  renderHub();
+}
+function applyRemote(r) {
+  S.autoEntries = r.autoEntries || [];
+  S.auto = r.auto || null;
+  if (r.rev !== S.rev && r.entries) {
+    const page = {};
+    for (const k of PAGE_FIELDS) if (r[k] != null) page[k] = r[k];
+    Object.assign(S, normalize(page), {active: r.active ?? null});
+    S.rev = r.rev;
+  }
+}
+async function syncHub() {
+  try {
+    const r = await api('GET', '/api/day/state');
+    if (r.status !== 200 || !r.data || !('autoEntries' in r.data)) return; // not served by the hub
+    const first = !hub.on;
+    hub.on = hub.online = true;
+    if (first && r.data.entries == null) { // empty hub: move this browser's data into it
+      S.rev = r.data.rev; S.autoEntries = r.data.autoEntries; S.auto = r.data.auto;
+      save(); renderAll();
+    } else if (!hub.dirty && !hub.busy) {
+      const json = JSON.stringify(r.data);
+      if (json !== hub.last) { hub.last = json; applyRemote(r.data); renderAll(); }
+    }
+  } catch { hub.online = false; }
+  renderHub();
+}
+function renderHub() {
+  $('hubState').textContent = !hub.on ? '' : hub.online ? 'synced' : 'hub offline';
+  $('hubState').classList.toggle('off', hub.on && !hub.online);
+}
+// Without the hub, pick up changes made in another tab.
+addEventListener('storage', e => { if (e.key === KEY && !hub.on) { Object.assign(S, load()); renderAll(); } });
+
+// ---------- time helpers ----------
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function startOfDay(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); }
+function addDays(t, n) { const d = new Date(t); d.setDate(d.getDate() + n); return d.getTime(); }
+const overlap = (s, e, a, b) => Math.max(0, Math.min(e, b) - Math.max(s, a));
+function fmtDur(ms) {
+  const m = Math.round(ms / MIN);
+  if (m < 60) return m + 'm';
+  return Math.floor(m / 60) + 'h' + (m % 60 ? ' ' + (m % 60) + 'm' : '');
+}
+function fmtClock(ms) {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 3600)}:${pad(Math.floor(s / 60) % 60)}:${pad(s % 60)}`;
+}
+const fmtTime = t => { const d = new Date(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function toInput(t) {
+  const d = new Date(t);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+const fromInput = v => new Date(v).getTime(); // no zone suffix → parsed as local time
+
+// The detected session, unless its heartbeats stopped (the hub closes it shortly after).
+const liveAuto = () => S.auto && Date.now() - S.auto.last <= 40000 ? S.auto : null;
+const findEntry = id => S.entries.find(x => x.id === id) || S.autoEntries.find(x => x.id === id);
+
+// All sessions, manual and detected, with the running ones ending "now".
+function sessions() {
+  const list = S.entries.concat(S.autoEntries.map(e => ({...e, auto: true})));
+  if (S.active) list.push({...S.active, end: Date.now(), live: true});
+  const au = liveAuto();
+  if (au) list.push({...au, end: Date.now(), live: true, auto: true});
+  else if (S.auto) list.push({...S.auto, end: S.auto.last, auto: true}); // paused: may still resume within the detour window
+  return list;
+}
+function totalsFor(day) {
+  const end = addDays(day, 1), t = Object.fromEntries(CATS.map(c => [c.id, 0]));
+  for (const s of sessions()) t[s.cat] += overlap(s.start, s.end, day, end);
+  return t;
+}
+
+// ---------- actions ----------
+function stop() {
+  if (!S.active) return;
+  const end = Date.now();
+  if (end - S.active.start >= 10000) S.entries.push({id: uid(), cat: S.active.cat, start: S.active.start, end, note: S.active.note || ''});
+  S.active = null;
+}
+function toggle(cat) {
+  const same = S.active && S.active.cat === cat;
+  stop();
+  if (!same) S.active = {cat, start: Date.now(), note: ''};
+  save();
+  renderAll();
+}
+
+// ---------- rendering ----------
+let viewDay = startOfDay(Date.now());
+
+function buildStatic() {
+  $('cats').innerHTML = CATS.map(c =>
+    `<button class="cat" data-cat="${c.id}" style="--c:var(--${c.id})">
+       <span class="ico">${ico(c.id)}</span><span class="nm">${c.label}</span><span class="t"></span>
+     </button>`).join('');
+  $('cats').onclick = e => { const b = e.target.closest('.cat'); if (b) toggle(b.dataset.cat); };
+
+  $('totals').innerHTML = CATS.map(c =>
+    `<div class="tot" data-cat="${c.id}" style="--c:var(--${c.id})">
+       <span class="dot"></span><span class="v-icon">${ico(c.id)}</span><span class="tot-name">${c.label}</span>
+       <span class="val"></span><span class="goal"></span>
+     </div>`).join('');
+  $('donutSegs').innerHTML = CATS.map(c =>
+    `<circle data-cat="${c.id}" cx="100" cy="100" r="80" stroke="var(--${c.id})" stroke-dasharray="0 ${DONUT_C}"><title></title></circle>`).join('');
+
+  $('fCat').innerHTML = CATS.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+
+  $('wgoals').innerHTML = CATS.map(c =>
+    `<div class="goal-item">
+       <label for="wgoal-${c.id}"><span class="v-icon">${ico(c.id)}</span>${c.label}</label>
+       <div class="goal-inputs">
+         <select class="field" data-wkind="${c.id}" aria-label="${c.label} weekly goal type"><option value="min">at least</option><option value="max">at most</option></select>
+         <input class="field" id="wgoal-${c.id}" type="number" min="0" step="0.5" data-wgoal="${c.id}">
+       </div>
+     </div>`).join('');
+  $('goals').innerHTML = CATS.map(c =>
+    `<div class="goal-item">
+       <label for="goal-${c.id}"><span class="v-icon">${ico(c.id)}</span>${c.label}</label>
+       <div class="goal-inputs">
+         <select class="field" data-kind="${c.id}" aria-label="${c.label} goal type"><option value="min">at least</option><option value="max">at most</option></select>
+         <input class="field" id="goal-${c.id}" type="number" min="0" step="5" data-goal="${c.id}">
+       </div>
+     </div>`).join('');
+}
+
+function renderNow() {
+  const a = S.active, now = $('now');
+  if (!a) {
+    const au = liveAuto();
+    now.dataset.for = '';
+    if (au) {
+      const el = Date.now() - au.start;
+      now.style.setProperty('--c', `var(--${au.cat})`);
+      now.innerHTML =
+        `<div class="now-header">
+           <div class="now-category"><span class="dot"></span><span class="now-label">${CAT[au.cat].label}${au.label ? ' · ' + esc(au.label) : ''}</span><span class="tag">auto</span></div>
+           <span class="now-since">since ${fmtTime(au.start)}</span>
+         </div>
+         <div class="clock">${fmtClock(el)}</div>`;
+      document.title = `${fmtClock(el)} · ${CAT[au.cat].label}`;
+      return;
+    }
+    now.style.removeProperty('--c');
+    now.innerHTML = '<div class="now-empty">Nothing running. Tap a category to start the clock.</div>';
+    document.title = 'Day Tracker';
+    return;
+  }
+  // Keep the note input in place while the clock ticks so typing isn't interrupted.
+  if (now.dataset.for !== a.cat + a.start) {
+    now.dataset.for = a.cat + a.start;
+    now.style.setProperty('--c', `var(--${a.cat})`);
+    now.innerHTML =
+      `<div class="now-header">
+         <div class="now-category"><span class="dot"></span><span class="now-label">${CAT[a.cat].label}</span></div>
+         <span class="now-since">since ${fmtTime(a.start)}</span>
+       </div>
+       <div class="clock" id="clock"></div>
+       <div class="now-controls">
+         <input class="note" id="note" placeholder="What are you working on?">
+         <button id="stop">Stop</button>
+       </div>`;
+    $('note').value = a.note || '';
+    $('note').oninput = e => { S.active.note = e.target.value; save(); };
+    $('stop').onclick = () => { stop(); save(); renderAll(); };
+  }
+  const el = Date.now() - a.start;
+  $('clock').textContent = fmtClock(el);
+  document.title = `${fmtClock(el)} · ${CAT[a.cat].label}`;
+}
+
+function renderCats() {
+  const today = totalsFor(startOfDay(Date.now()));
+  $('headTotal').textContent = fmtDur(Object.values(today).reduce((a, b) => a + b, 0));
+  $('headDate').textContent = new Date().toLocaleDateString(undefined, DAY_FMT);
+  for (const b of $('cats').children) {
+    const c = b.dataset.cat;
+    b.classList.toggle('on', (S.active || liveAuto())?.cat === c);
+    b.querySelector('.t').textContent = today[c] ? fmtDur(today[c]) : '·';
+  }
+}
+
+function renderDay() {
+  const t = totalsFor(viewDay);
+  const isToday = viewDay === startOfDay(Date.now());
+  $('dayTitle').textContent = isToday ? 'Today' : new Date(viewDay).toLocaleDateString(undefined, DAY_FMT);
+  $('next').disabled = isToday;
+
+  $('sessTitle').textContent = isToday ? 'Sessions today' : 'Sessions · ' + new Date(viewDay).toLocaleDateString(undefined, DAY_FMT);
+  const total = Object.values(t).reduce((a, b) => a + b, 0);
+  dayTotals = {t, total};
+
+  // Legend rows: time, plus progress toward the goal (or how far over a limit).
+  for (const row of $('totals').children) {
+    const c = row.dataset.cat, g = S.goals[c], ms = t[c], goal = g.mins * MIN;
+    const over = g.kind === 'max' && goal > 0 && ms > goal && new Date(viewDay).getDay() !== 0; // Sunday: no limits
+    const met = g.kind === 'min' && goal > 0 && ms >= goal;
+    row.classList.toggle('over', over);
+    row.classList.toggle('met', met);
+    row.querySelector('.val').textContent = fmtDur(ms);
+    row.querySelector('.goal').textContent = !goal ? '' :
+      g.kind === 'max' ? (over ? `${fmtDur(ms - goal)} over the ${fmtDur(goal)} limit` : `limit ${fmtDur(goal)}`) :
+      met ? `goal ${fmtDur(goal)} reached` : `${Math.round(ms / goal * 100)}% of ${fmtDur(goal)} goal`;
+  }
+
+  // Donut: slices in the fixed category order, with a small gap between neighbours.
+  let acc = 0;
+  for (const seg of $('donutSegs').children) {
+    const c = seg.dataset.cat, len = total ? t[c] / total * DONUT_C : 0;
+    const gap = len > 0 && len < DONUT_C - 0.01 ? Math.min(2, len / 2) : 0;
+    seg.setAttribute('stroke-dasharray', `${Math.max(0, len - gap)} ${DONUT_C}`);
+    seg.setAttribute('stroke-dashoffset', -acc);
+    seg.firstChild.textContent = `${CAT[c].label}: ${fmtDur(t[c])}`;
+    acc += len;
+  }
+  $('donut').setAttribute('aria-label', 'Time by category: ' + CATS.map(c => `${c.label} ${fmtDur(t[c.id])}`).join(', '));
+  renderDonutCenter();
+
+  const end = addDays(viewDay, 1), span = end - viewDay;
+  $('timeline').innerHTML = sessions()
+    .filter(s => overlap(s.start, s.end, viewDay, end))
+    .map(s => {
+      const l = (Math.max(s.start, viewDay) - viewDay) / span * 100;
+      const w = overlap(s.start, s.end, viewDay, end) / span * 100;
+      return `<i style="--c:var(--${s.cat});left:${l}%;width:${Math.max(w, .3)}%" title="${CAT[s.cat].label} ${fmtTime(s.start)}–${fmtTime(s.end)}"></i>`;
+    }).join('');
+}
+
+// Hovering a slice or a legend row spotlights that category in the donut's centre.
+const DONUT_C = 2 * Math.PI * 80;
+let dayTotals = {t: {}, total: 0}, donutHover = null;
+function renderDonutCenter() {
+  const {t, total} = dayTotals, c = donutHover;
+  if (c) {
+    $('donutTotal').textContent = fmtDur(t[c] || 0);
+    $('donutSub').textContent = `${CAT[c].label} · ${total ? Math.round(t[c] / total * 100) : 0}%`;
+  } else {
+    $('donutTotal').textContent = fmtDur(total);
+    $('donutSub').textContent = total ? 'tracked' : 'nothing tracked yet';
+  }
+}
+function setDonutHover(c) {
+  donutHover = c;
+  for (const seg of $('donutSegs').children) seg.classList.toggle('dim', !!c && seg.dataset.cat !== c);
+  for (const row of $('totals').children) row.classList.toggle('hl', row.dataset.cat === c);
+  renderDonutCenter();
+}
+
+// What a session was made of: "VS Code · Oring 1h 5m, Firefox 25m". Just the label when there's one part.
+function partsText(s) {
+  const p = {...(s.parts || {})};
+  if (s.live && s.last) p[s.label || ''] = (p[s.label || ''] || 0) + (Date.now() - s.last);
+  const list = Object.entries(p).filter(([, ms]) => ms >= MIN).sort((a, b) => b[1] - a[1]);
+  if (list.length <= 1) return s.label ? [s.label] : [];
+  return list.map(([l, ms]) => `${l || 'other'} ${fmtDur(ms)}`);
+}
+
+function renderEntries() {
+  const end = addDays(viewDay, 1);
+  const list = sessions().filter(s => overlap(s.start, s.end, viewDay, end)).sort((a, b) => b.start - a.start);
+  $('entries').innerHTML = list.length ? list.map(s =>
+    `<li data-id="${s.live ? '' : s.id}">
+       <div class="entry-left">
+         <span class="dot" style="--c:var(--${s.cat})"></span>
+         <span class="when">${fmtTime(s.start)}–${s.live ? 'now' : fmtTime(s.end)}</span>
+         <span class="what" title="${esc([...partsText(s), s.note].filter(Boolean).join(' · '))}">${CAT[s.cat].label}${[partsText(s).join(', '), s.note].filter(Boolean).map(t => ' · <span class="muted">' + esc(t) + '</span>').join('')}</span>
+         ${s.auto ? '<span class="tag">auto</span>' : ''}
+       </div>
+       <div class="entry-right"><span class="dur">${fmtDur(s.end - s.start)}</span></div>
+     </li>`).join('') : '<li class="empty">No entries for this day.</li>';
+}
+
+function renderWeek() {
+  const days = Array.from({length: 7}, (_, i) => addDays(viewDay, i - 6));
+  const totals = days.map(totalsFor);
+  const sums = totals.map(t => Object.values(t).reduce((a, b) => a + b, 0));
+  const max = Math.max(...sums, 4 * 3600000);
+  $('week').innerHTML = days.map((d, i) =>
+    `<div class="wcol${d === viewDay ? ' sel' : ''}" data-day="${d}" title="${fmtDur(sums[i])} tracked">
+       <div class="stack" style="height:${sums[i] / max * 100}%">
+         ${CATS.map(c => totals[i][c.id] ? `<i style="--c:var(--${c.id});height:${totals[i][c.id] / sums[i] * 100}%"></i>` : '').join('')}
+       </div>
+     </div>`).join('');
+  $('wlab').innerHTML = days.map(d => `<span>${new Date(d).toLocaleDateString(undefined, {weekday: 'short'})}</span>`).join('');
+
+  const rows = CATS.map(c => {
+    const sum = totals.reduce((a, t) => a + t[c.id], 0);
+    const g = S.goals[c.id];
+    const hit = g.mins ? totals.filter(t => g.kind === 'max' ? t[c.id] <= g.mins * MIN : t[c.id] >= g.mins * MIN).length : null;
+    return `<tr><td><div class="tbl-cat-cell"><span class="dot" style="--c:var(--${c.id})"></span><span class="v-icon">${ico(c.id)}</span>${c.label}</div></td>
+      <td>${fmtDur(sum)}</td><td>${fmtDur(sum / 7)}</td><td>${hit === null ? '–' : hit + '/7'}</td></tr>`;
+  }).join('');
+  $('wtable').innerHTML = `<tr><th>Category</th><th>Total</th><th>Avg/day</th><th>Goal met</th></tr>${rows}`;
+}
+
+// ---------- weeks, trend, streak ----------
+function weekStart(t) { const d = new Date(startOfDay(t)); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return d.getTime(); } // Monday
+function totalsBetween(a, b) {
+  const t = Object.fromEntries(CATS.map(c => [c.id, 0]));
+  for (const s of sessions()) t[s.cat] += overlap(s.start, s.end, a, b);
+  return t;
+}
+function renderTrend() {
+  const now = Date.now(), ws = weekStart(now), lws = addDays(ws, -7);
+  const cur = totalsBetween(ws, now), prev = totalsBetween(lws, lws + (now - ws));
+  const rows = CATS.map(c => {
+    const g = S.weeklyGoals[c.id], goal = g.mins * MIN, d = cur[c.id] - prev[c.id];
+    const chg = Math.abs(d) < MIN ? '–' : `${d > 0 ? '▲' : '▼'} ${fmtDur(Math.abs(d))}`;
+    let goalCell = '–';
+    if (goal) {
+      const over = g.kind === 'max' && cur[c.id] > goal, met = g.kind === 'min' && cur[c.id] >= goal;
+      goalCell = `<div class="wg${over ? ' over' : ''}${met ? ' met' : ''}" style="--c:var(--${c.id})" title="${Math.round(cur[c.id] / goal * 100)}% of the weekly ${g.kind === 'max' ? 'limit' : 'goal'}">
+        <span class="bar-mini"><i style="width:${Math.min(100, cur[c.id] / goal * 100)}%"></i></span>${g.kind === 'max' ? 'max ' : ''}${fmtDur(goal)}</div>`;
+    }
+    return `<tr><td><div class="tbl-cat-cell"><span class="dot" style="--c:var(--${c.id})"></span><span class="v-icon">${ico(c.id)}</span>${c.label}</div></td>
+      <td>${fmtDur(cur[c.id])}</td><td>${fmtDur(prev[c.id])}</td><td class="chg">${chg}</td><td>${goalCell}</td></tr>`;
+  }).join('');
+  $('trend').innerHTML = `<tr><th>Category</th><th>This week</th><th>Last week</th><th>Change</th><th>Weekly goal</th></tr>${rows}`;
+}
+function renderStreak() {
+  // As many weeks as fit the card (14px cells + 4px gaps), between 12 and 52.
+  const now = Date.now(), today = startOfDay(now), WEEKS = Math.max(12, Math.min(52, Math.floor(($('heat').clientWidth || 340) / 18)));
+  const first = addDays(weekStart(today), -(WEEKS - 1) * 7), last = addDays(weekStart(today), 6);
+  const g = S.goals.study, goal = g.kind === 'min' && g.mins ? g.mins * MIN : 0;
+  const met = ms => goal ? ms >= goal : ms >= MIN;
+  const ref = goal || 2 * 3600000;
+  const study = new Map();
+  for (let d = first; d <= today; d = addDays(d, 1)) study.set(d, totalsFor(d).study);
+
+  let cells = '', best = 0, run = 0;
+  for (let d = first; d <= last; d = addDays(d, 1)) {
+    if (d > today) { cells += '<i class="future"></i>'; continue; }
+    const ms = study.get(d), r = ms / ref;
+    const lv = ms < MIN ? 0 : r < 0.34 ? 1 : r < 0.67 ? 2 : r < 1 ? 3 : 4;
+    const label = new Date(d).toLocaleDateString(undefined, {weekday: 'short', day: 'numeric', month: 'short'});
+    cells += `<i class="${lv ? 'l' + lv : ''}${d === today ? ' today' : ''}" title="${label}: ${fmtDur(ms)} study"></i>`;
+    run = met(ms) ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  // Current streak: today counts once the goal is met; until then it runs up to yesterday.
+  let streak = 0;
+  for (let d = met(study.get(today)) ? today : addDays(today, -1); d >= first && met(study.get(d)); d = addDays(d, -1)) streak++;
+  const month = new Date(today); month.setDate(1);
+  const monthMs = totalsBetween(month.getTime(), now).study;
+
+  $('heat').innerHTML = cells;
+  $('streakHead').innerHTML =
+    `<div><div class="streak-num">🔥 ${streak}</div><div class="streak-sub">day streak · goal ${goal ? fmtDur(goal) + ' a day' : 'any study'}</div></div>
+     <div><div class="streak-num sm">${best}</div><div class="streak-sub">best, last ${WEEKS} weeks</div></div>
+     <div><div class="streak-num sm">${fmtDur(monthMs)}</div><div class="streak-sub">studied this month</div></div>`;
+}
+
+function renderSettings() {
+  for (const c of CATS) {
+    document.querySelector(`[data-goal="${c.id}"]`).value = S.goals[c.id].mins;
+    document.querySelector(`[data-kind="${c.id}"]`).value = S.goals[c.id].kind;
+  }
+  for (const c of CATS) {
+    document.querySelector(`[data-wgoal="${c.id}"]`).value = S.weeklyGoals[c.id].mins / 60;
+    document.querySelector(`[data-wkind="${c.id}"]`).value = S.weeklyGoals[c.id].kind;
+  }
+  $('summaryAt').value = S.summaryAt || '';
+  $('breakAfter').value = S.breakAfter;
+  const n = 'Notification' in window ? Notification.permission : 'unsupported';
+  $('notif').disabled = n !== 'default';
+  $('notif').lastChild.textContent = n === 'granted' ? 'Notifications on' : n === 'denied' ? 'Notifications blocked' : n === 'unsupported' ? 'No notification support' : 'Turn on notifications';
+}
+
+const autoFlags = new Set(); // reminded/dismissed flags for detected sessions, which the hub owns
+function checkBreak() {
+  const a = S.active || liveAuto(), isAuto = a && !S.active;
+  const flag = k => isAuto ? autoFlags.has(a.id + k) : a[k];
+  const due = a && !a.plan && FOCUS_CATS.includes(a.cat) && S.breakAfter > 0 && Date.now() - a.start >= S.breakAfter * MIN;
+  $('banner').classList.toggle('show', !!(due && !flag('dismissed')));
+  if (due && !flag('reminded')) {
+    if (isAuto) autoFlags.add(a.id + 'reminded');
+    else { a.reminded = true; save(); }
+    notify('Time for a break', `${fmtDur(Date.now() - a.start)} of ${CAT[a.cat].label.toLowerCase()} so far.`);
+  }
+}
+
+const esc = s => s.replace(/[&<>"]/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[ch]));
+
+function renderAll() {
+  renderNow(); renderCats(); renderDay(); renderEntries(); renderWeek(); renderTrend(); renderStreak(); renderSettings(); checkBreak(); renderFocus(); renderTodos();
+  syncWakeLock();
+}
+
+// Light updates every second; lists that contain buttons are redrawn once a minute so clicks aren't lost.
+let ticks = 0, lastToday = startOfDay(Date.now());
+setInterval(() => {
+  const today = startOfDay(Date.now());
+  if (today !== lastToday) { // past midnight: follow along if we were looking at "today"
+    if (viewDay === lastToday) viewDay = today;
+    lastToday = today; renderAll();
+  }
+  checkCountdown(); checkReminders();
+  renderNow(); renderCats(); renderDay(); checkBreak(); renderFocus();
+  if (++ticks % 60 === 0) { renderEntries(); renderWeek(); renderTrend(); renderStreak(); }
+}, 1000);
+
+// ---------- events ----------
+$('prev').onclick = () => { viewDay = addDays(viewDay, -1); renderAll(); };
+$('next').onclick = () => { viewDay = Math.min(addDays(viewDay, 1), startOfDay(Date.now())); renderAll(); };
+$('today').onclick = () => { viewDay = startOfDay(Date.now()); renderAll(); };
+$('week').onclick = e => { const c = e.target.closest('.wcol'); if (c) { viewDay = +c.dataset.day; renderAll(); } };
+$('takeBreak').onclick = () => toggle('break');
+$('dismiss').onclick = () => {
+  if (S.active) { S.active.dismissed = true; save(); }
+  else if (liveAuto()) autoFlags.add(liveAuto().id + 'dismissed');
+  checkBreak();
+};
+
+$('goals').onchange = e => {
+  const id = e.target.dataset.goal || e.target.dataset.kind;
+  if (!id) return;
+  if (e.target.dataset.goal) S.goals[id].mins = Math.max(0, +e.target.value || 0);
+  else S.goals[id].kind = e.target.value;
+  save(); renderAll();
+};
+$('wgoals').onchange = e => {
+  const id = e.target.dataset.wgoal || e.target.dataset.wkind;
+  if (!id) return;
+  if (e.target.dataset.wgoal) S.weeklyGoals[id].mins = Math.max(0, Math.round((+e.target.value || 0) * 60));
+  else S.weeklyGoals[id].kind = e.target.value;
+  save(); renderAll();
+};
+$('summaryAt').onchange = e => { S.summaryAt = e.target.value; save(); };
+$('breakAfter').onchange = e => { S.breakAfter = Math.max(0, +e.target.value || 0); save(); renderAll(); };
+$('notif').onclick = () => Notification.requestPermission().then(renderSettings);
+
+// entry dialog
+let editing = null; // entry id, or null when adding
+function openDialog(entry) {
+  editing = entry ? entry.id : null;
+  const now = Date.now();
+  // A new entry defaults to the last 30 minutes of the selected day.
+  const end = entry ? entry.end : Math.min(now, addDays(viewDay, 1) - MIN);
+  const e = entry || {cat: 'work', start: end - 30 * MIN, end, note: ''};
+  $('dlgTitle').textContent = entry ? 'Edit entry' : 'Add entry';
+  $('fCat').value = e.cat; $('fStart').value = toInput(e.start); $('fEnd').value = toInput(e.end); $('fNote').value = e.note || '';
+  $('fDel').style.visibility = entry ? 'visible' : 'hidden';
+  $('fErr').textContent = '';
+  $('dlg').showModal();
+}
+$('add').onclick = () => openDialog(null);
+$('entries').onclick = e => {
+  const li = e.target.closest('li[data-id]');
+  if (li && li.dataset.id) openDialog(findEntry(li.dataset.id));
+};
+$('fSave').onclick = e => {
+  const start = fromInput($('fStart').value), end = fromInput($('fEnd').value);
+  if (!(end > start)) { e.preventDefault(); $('fErr').textContent = 'End has to be after start.'; return; }
+  if (end > Date.now() + MIN) { e.preventDefault(); $('fErr').textContent = "End can't be in the future."; return; }
+  const data = {cat: $('fCat').value, start, end, note: $('fNote').value.trim()};
+  const autoEntry = editing && S.autoEntries.find(x => x.id === editing);
+  if (autoEntry) { Object.assign(autoEntry, data); api('PATCH', '/api/day/auto/' + editing, data).catch(() => {}); }
+  else if (editing) Object.assign(S.entries.find(x => x.id === editing), data);
+  else S.entries.push({id: uid(), ...data});
+  save(); renderAll();
+};
+$('fDel').onclick = () => {
+  if (!confirm('Delete this entry?')) return;
+  if (S.autoEntries.some(x => x.id === editing)) {
+    S.autoEntries = S.autoEntries.filter(x => x.id !== editing);
+    api('DELETE', '/api/day/auto/' + editing).catch(() => {});
+  } else S.entries = S.entries.filter(x => x.id !== editing);
+  save(); $('dlg').close(); renderAll();
+};
+
+// backup
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], {type}));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const stamp = () => new Date().toISOString().slice(0, 10);
+$('exportJson').onclick = () => download(`day-tracker-${stamp()}.json`, JSON.stringify(S, null, 2), 'application/json');
+$('exportCsv').onclick = () => {
+  const q = s => `"${String(s).replace(/"/g, '""')}"`;
+  const all = S.entries.concat(S.autoEntries).sort((a, b) => a.start - b.start);
+  const lines = ['category,start,end,minutes,source,label,note', ...all.map(e =>
+    [CAT[e.cat].label, new Date(e.start).toISOString(), new Date(e.end).toISOString(), Math.round((e.end - e.start) / MIN),
+     e.source || 'manual', q(e.label || ''), q(e.note || '')].join(','))];
+  download(`day-tracker-${stamp()}.csv`, lines.join('\n'), 'text/csv');
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.entries) || d.entries.some(x => !CAT[x.cat] || !(x.end > x.start))) throw new Error('bad format');
+    if (!confirm(`Replace current data with ${d.entries.length} entries from ${f.name}?`)) return;
+    const page = {};
+    for (const k of PAGE_FIELDS) if (d[k] != null) page[k] = d[k];
+    Object.assign(S, normalize(page)); save(); renderAll();
+  } catch { alert("That file doesn't look like a Day Tracker export."); }
+};
+
+// ---------- fullscreen timer ----------
+// Ported from alphakevin/fullscreen-timer (MIT): same look and keys, but the clock is the tracker's live session.
+let focusEdit = null, focusDone = null, wakeLock = null, wakePending = false;
+const isFocusOpen = () => $('focus').classList.contains('open');
+const setHTML = (el, html) => { if (el._html !== html) { el._html = html; el.innerHTML = html; } };
+
+// ---------- todos & reminders ----------
+const dayTime = t => (startOfDay(t) === startOfDay(Date.now()) ? '' : new Date(t).toLocaleDateString(undefined, {weekday: 'short', month: 'short', day: 'numeric'}) + ' ') + fmtTime(t);
+function renderTodos() {
+  const todos = [...S.todos].sort((a, b) => a.done - b.done || b.created - a.created);
+  setHTML($('todos'), todos.length ? todos.map(t =>
+    `<li class="${t.done ? 'done' : ''}" data-id="${t.id}"><input type="checkbox" ${t.done ? 'checked' : ''} aria-label="Done"><span class="what">${esc(t.text)}</span><button class="x" aria-label="Delete">×</button></li>`).join('')
+    : '<li class="empty">Nothing to do.</li>');
+  const rems = [...S.reminders].sort((a, b) => a.fired - b.fired || a.at - b.at);
+  setHTML($('reminders'), rems.length ? rems.map(r =>
+    `<li class="${r.fired ? 'done' : ''}" data-id="${r.id}"><span class="when">${dayTime(r.at)}</span><span class="what">${esc(r.text)}</span><button class="x" aria-label="Delete">×</button></li>`).join('')
+    : '<li class="empty">No reminders.</li>');
+}
+// Due reminders chime here; JARVIS says them out loud. Ones that came due while nothing was open just get marked.
+function checkReminders() {
+  const now = Date.now();
+  const due = S.reminders.filter(r => !r.fired && r.at <= now);
+  if (!due.length) return;
+  for (const r of due) {
+    r.fired = true;
+    if (now - r.at < 10 * MIN) { notify('Reminder', r.text); chime(); }
+  }
+  save(); renderTodos();
+}
+async function loadTodos() {
+  try { const r = await api('GET', '/api/day/todos'); if (r.status === 200 && Array.isArray(r.data)) { S.todos = r.data; renderTodos(); } } catch {}
+}
+$('todoForm').onsubmit = async e => {
+  e.preventDefault();
+  const text = $('todoText').value.trim();
+  if (!text) return;
+  $('todoText').value = '';
+  const r = await api('POST', '/api/day/todos', {text}).catch(() => null);
+  if (r && r.status === 200) { S.todos.push(r.data); renderTodos(); } else { $('todoText').value = text; alert('Could not add the todo.'); }
+};
+$('remForm').onsubmit = e => {
+  e.preventDefault();
+  const text = $('remText').value.trim(), at = new Date($('remAt').value).getTime();
+  if (!text || !(at > Date.now())) return alert('Pick a time in the future.');
+  S.reminders.push({id: uid(), text, at, fired: false});
+  $('remText').value = ''; $('remAt').value = ''; save(); renderTodos();
+};
+$('reminders').onclick = e => {
+  const li = e.target.closest('li[data-id]');
+  if (!li || !e.target.classList.contains('x')) return;
+  S.reminders = S.reminders.filter(x => x.id !== li.dataset.id);
+  save(); renderTodos();
+};
+$('todos').onclick = async e => {
+  const li = e.target.closest('li[data-id]');
+  const t = li && S.todos.find(x => x.id === li.dataset.id);
+  if (!t) return;
+  if (e.target.classList.contains('x')) { S.todos = S.todos.filter(x => x !== t); renderTodos(); await api('DELETE', '/api/day/todos/' + t.id).catch(() => {}); }
+  else if (e.target.type === 'checkbox') { t.done = e.target.checked; renderTodos(); await api('PATCH', '/api/day/todos/' + t.id, {done: t.done}).catch(() => {}); }
+};
+
+function notify(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') try { new Notification(title, {body}); } catch {}
+}
+function chime() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    [660, 880, 1320].forEach((hz, i) => {
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * 0.25;
+      o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      o.connect(g).connect(ac.destination);
+      o.start(t); o.stop(t + 0.45);
+    });
+    setTimeout(() => ac.close(), 1500);
+  } catch {}
+}
+
+function openFocus() {
+  $('focus').classList.add('open');
+  const el = document.documentElement;
+  if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => {});
+  renderAll();
+}
+function closeFocus() {
+  $('focus').classList.remove('open');
+  if (location.hash === '#focus') history.replaceState(null, '', location.pathname);
+  focusEdit = focusDone = null;
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  renderAll();
+}
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+}
+
+function startFocus() {
+  const f = S.focus;
+  S.active = {cat: f.cat, start: Date.now(), note: ''};
+  if (f.mode === 'countdown' && f.secs > 0) S.active.plan = f.secs * 1000;
+  focusEdit = focusDone = null;
+}
+function focusStartStop() {
+  if (S.active) stop(); else startFocus();
+  focusEdit = null;
+  save(); renderAll();
+}
+function focusPick(cat) {
+  S.focus.cat = cat;
+  if (S.active && S.active.cat !== cat) { stop(); startFocus(); }
+  save(); renderAll();
+}
+function focusReset() {
+  if (S.active) {
+    if (!confirm('Discard the running session without logging it?')) return;
+    S.active = null;
+  } else S.focus.secs = DEFAULTS.focus.secs;
+  focusEdit = focusDone = null;
+  save(); renderAll();
+}
+function focusMode(mode) {
+  const f = S.focus, a = S.active;
+  f.mode = mode || (f.mode === 'countdown' ? 'stopwatch' : 'countdown');
+  if (a) {
+    if (f.mode === 'countdown' && f.secs > 0) a.plan = Date.now() - a.start + f.secs * 1000; // count down from now
+    else delete a.plan;
+  }
+  save(); renderAll();
+}
+function focusEditMove(dir) {
+  if (dir === 'left' || dir === 'right') { focusEdit = dir === 'left' ? 'minute' : 'second'; renderFocus(); return; }
+  const a = S.active;
+  if (a && !a.plan) return; // a running stopwatch has nothing to edit
+  focusEdit = focusEdit || 'minute';
+  const step = (focusEdit === 'minute' ? 60 : 1) * (dir === 'up' ? 1 : -1);
+  if (a) a.plan = Math.max(Date.now() - a.start + 1000, a.plan + step * 1000);
+  else { S.focus.mode = 'countdown'; S.focus.secs = Math.min(5 * 3600, Math.max(0, S.focus.secs + step)); }
+  save(); renderFocus();
+}
+
+// A countdown that ran out (even while the page was closed) is logged as ending exactly on time.
+function checkCountdown() {
+  const a = S.active;
+  if (!a || !a.plan || Date.now() - a.start < a.plan) return;
+  const end = a.start + a.plan;
+  S.entries.push({id: uid(), cat: a.cat, start: a.start, end, note: a.note || ''});
+  S.active = null; focusDone = a.cat; focusEdit = null;
+  save();
+  if (Date.now() - end < 5000) { chime(); notify("Time's up", `${fmtDur(a.plan)} of ${CAT[a.cat].label.toLowerCase()} logged.`); }
+  renderAll();
+}
+
+function renderFocus() {
+  if (!isFocusOpen()) return;
+  const a = S.active, f = S.focus, now = Date.now(), au = a ? null : liveAuto();
+  const mode = a ? (a.plan ? 'countdown' : 'stopwatch') : au ? 'stopwatch' : f.mode;
+  const ms = a ? (a.plan ? Math.max(0, a.plan - (now - a.start)) : now - a.start) : au ? now - au.start : (mode === 'countdown' ? f.secs * 1000 : 0);
+  const sec = mode === 'countdown' ? Math.ceil(ms / 1000) : Math.floor(ms / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60;
+  const ed = k => (a ? a.plan : !au) && focusEdit === k ? ' class="ed"' : '';
+  setHTML($('fClock'), `<span${ed('minute')}>${h ? h + ':' + pad(m) : pad(m)}</span>:<span${ed('second')}>${pad(sec % 60)}</span>`);
+  $('fClock').classList.toggle('long', h > 0);
+
+  const cur = (a || au || f).cat, label = CAT[cur].label;
+  $('focus').style.setProperty('--c', `var(--${cur})`);
+  for (const b of $('fCats').children) b.classList.toggle('on', b.dataset.cat === cur);
+  $('fHint').textContent =
+    focusDone ? `✓ ${CAT[focusDone].label} done. Space to go again, or 5 for a break.` :
+    a ? `${label} since ${fmtTime(a.start)}` + (a.plan ? ` · ends ${fmtTime(a.start + a.plan)}` : '') +
+        ($('banner').classList.contains('show') ? ' · time for a break?' : '') :
+    au ? `Detected: ${au.label || CAT[au.cat].label} · since ${fmtTime(au.start)}` + ($('banner').classList.contains('show') ? ' · time for a break?' : '') :
+    `Ready · Space to start ${label.toLowerCase()}`;
+  setHTML($('fMode'), mode === 'countdown'
+    ? '<span>countdown ✓</span> or <button data-mode="stopwatch">stopwatch</button>'
+    : '<button data-mode="countdown">countdown</button> or <span>stopwatch ✓</span>');
+  $('fFs').textContent = document.fullscreenElement ? 'exit fullscreen' : 'enter fullscreen';
+  $('fGo').textContent = a ? 'stop & log' : 'start';
+}
+
+async function syncWakeLock() {
+  const want = isFocusOpen() && !!S.active && document.visibilityState === 'visible';
+  if (wakePending || want === !!wakeLock || !('wakeLock' in navigator)) return;
+  wakePending = true;
+  try {
+    if (want) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.onrelease = () => { wakeLock = null; }; }
+    else { await wakeLock.release(); wakeLock = null; }
+  } catch {} finally { wakePending = false; }
+}
+
+function focusKey(k) {
+  switch (k) {
+    case 'f': case 'F': toggleFullscreen(); break;
+    case 'r': case 'R': focusReset(); break;
+    case 's': case 'S': focusMode(); break;
+    case ' ': focusStartStop(); break;
+    case 'Enter': focusEdit = focusEdit ? null : 'minute'; renderFocus(); break;
+    case 'Escape': closeFocus(); break;
+    case 'ArrowUp': case 'ArrowDown': case 'ArrowLeft': case 'ArrowRight': focusEditMove(k.slice(5).toLowerCase()); break;
+    default:
+      if (!/^[1-9]$/.test(k) || !CATS[k - 1]) return false;
+      focusPick(CATS[k - 1].id);
+  }
+  return true;
+}
+
+$('fCats').innerHTML = CATS.map((c, i) => `<button data-cat="${c.id}" style="--c:var(--${c.id})"><span class="v-icon">${ico(c.id)}</span>${c.label}<kbd>${i + 1}</kbd></button>`).join('');
+$('openFocus').onclick = openFocus;
+$('focus').onclick = e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.cat) focusPick(b.dataset.cat);
+  else if (b.dataset.mode) focusMode(b.dataset.mode);
+  else if (b.dataset.k) focusKey(b.dataset.k);
+  b.blur(); // otherwise Space would press this button again
+};
+$('fClock').ondblclick = toggleFullscreen;
+$('fClock').onclick = () => { if (matchMedia('(pointer: coarse)').matches) focusStartStop(); }; // tap to start/stop on touch screens
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || $('dlg').open || e.target.closest?.('input,select,textarea')) return;
+  if (!isFocusOpen()) { if (e.key === 'f' || e.key === 'F') { e.preventDefault(); openFocus(); } return; }
+  if (focusKey(e.key)) e.preventDefault();
+});
+document.addEventListener('fullscreenchange', renderFocus);
+document.addEventListener('visibilitychange', syncWakeLock);
+
+// The theme is ProducTVT's: follow the parent page's data-theme (or the OS when it has none).
+function applyTheme(t) {
+  document.body.classList.toggle('theme-light', t === 'light');
+  document.body.classList.toggle('theme-dark', t !== 'light');
+}
+const parentTheme = () => { try { return parent.document.documentElement.dataset.theme; } catch { return undefined; } };
+const osTheme = () => matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+applyTheme(parentTheme() || osTheme());
+try { new MutationObserver(() => applyTheme(parentTheme() || osTheme())).observe(parent.document.documentElement, {attributes: true, attributeFilter: ['data-theme']}); } catch {}
+matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => applyTheme(parentTheme() || osTheme()));
+
+buildStatic();
+for (const el of [$('donutSegs'), $('totals')]) {
+  el.addEventListener('mouseover', e => { const x = e.target.closest('[data-cat]'); if (x) setDonutHover(x.dataset.cat); });
+  el.addEventListener('mouseleave', () => setDonutHover(null));
+}
+$('donutSegs').addEventListener('click', e => { const x = e.target.closest('[data-cat]'); if (x) setDonutHover(donutHover === x.dataset.cat ? null : x.dataset.cat); });
+checkCountdown();
+renderAll();
+// http://localhost:7313/#focus opens straight on the fullscreen timer (JARVIS: "show the big timer").
+const focusFromHash = () => { if (location.hash === '#focus' && !isFocusOpen()) openFocus(); };
+focusFromHash();
+addEventListener('hashchange', focusFromHash);
+syncHub(); setInterval(syncHub, 5000);
+loadTodos(); setInterval(loadTodos, 20000);
+</script>
+</body>
+</html>

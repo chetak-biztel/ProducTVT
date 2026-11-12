@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { changeOwnPasswordAction } from "@/app/(app)/settings/actions";
 import { Field } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 import type { ActionState } from "@/lib/actions/types";
 
 export function ChangePasswordForm() {
@@ -12,10 +13,10 @@ export function ChangePasswordForm() {
   return (
     <form action={action} className="max-w-sm space-y-4">
       <Field label="Current password" htmlFor="currentPassword">
-        <input id="currentPassword" name="currentPassword" type="password" autoComplete="current-password" className="input" />
+        <PasswordInput id="currentPassword" name="currentPassword" autoComplete="current-password" />
       </Field>
       <Field label="New password" htmlFor="newPassword">
-        <input id="newPassword" name="newPassword" type="password" autoComplete="new-password" className="input" placeholder="Min. 6 characters" />
+        <PasswordInput id="newPassword" name="newPassword" autoComplete="new-password" placeholder="Min. 6 characters" />
       </Field>
 
       {state?.error && (

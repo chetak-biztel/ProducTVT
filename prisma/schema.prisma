@@ -75,6 +75,8 @@ model User {
   role         Role     @default(EMPLOYEE)
   active       Boolean  @default(true)
   accentColor  String?
+  // Secret the local Day Tracker hub sends to push detected activity (Settings → Day Tracker).
+  dayToken     String?  @unique
   createdAt    DateTime @default(now())
 
   // relations
@@ -91,6 +93,7 @@ model User {
   planStatuses    PlanStatus[]    @relation("PlanStatusOwner")
   planColumns     PlanColumn[]    @relation("PlanColumnOwner")
   notes           Note[]
+  dayState        DayState?
 }
 
 model AppSetting {
@@ -339,4 +342,17 @@ model Note {
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   @@index([ownerId])
+}
+
+// ---- Day Tracker ----
+
+/** One JSON document per user, same shape the local hub used: entries, active timer, goals,
+    reminders, plus autoEntries/auto (detected activity). `rev` counts page-side changes. */
+model DayState {
+  userId    String   @id
+  rev       Int      @default(0)
+  data      Json     @default("{}")
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

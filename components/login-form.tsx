@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Loader2, LogIn } from "lucide-react";
 import { loginAction } from "@/app/login/actions";
 import { Field } from "@/components/ui/field";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, null);
@@ -21,14 +22,7 @@ export function LoginForm() {
         />
       </Field>
       <Field label="Password" htmlFor="password">
-        <input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          className="input"
-          placeholder="••••••••"
-        />
+        <PasswordInput id="password" name="password" autoComplete="current-password" placeholder="••••••••" />
       </Field>
 
       {state?.error && (

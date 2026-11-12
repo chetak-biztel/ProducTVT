@@ -235,7 +235,7 @@ function CommandPalette({ role, onClose, onNewTodo }: { role: string; onClose: (
             autoFocus
             value={q}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search todos, plans, projects, notes…"
+            placeholder="Search todos, notes…"
             className="h-12 w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)]"
             aria-label="Search"
           />

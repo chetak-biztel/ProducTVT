@@ -53,3 +53,9 @@ Weekly action plans, personal todos, and project management for the team — bui
 
 - The first Founder account comes from the seed script — sign in and create real accounts under **Admin → Users** (accounts are admin-provisioned; there's no public sign-up).
 - **Admin → Board config** manages the plan statuses, category tags, and the app's accent color.
+
+## Day Tracker (merged in)
+
+**Day Tracker** in the sidebar (`/day`) is the old Day Tracker page: timers, goals, day view, last 7 days, streak, reminders, fullscreen timer, backup. It is `public/day-tracker.html` in an iframe, saves to the `DayState` table through `/api/day/*`, and follows the app's light/dark theme. Its todo card is the same `Todo` table as the Todos page. Run `npm run db:deploy` once for the new tables.
+
+To feed it detected activity (browser, VS Code, desktop apps), make a token in **Settings → Day Tracker hub** and start the local hub (in the day-tracker repo) with `REMOTE_URL=https://<this app> REMOTE_TOKEN=<token>`.
